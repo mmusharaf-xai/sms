@@ -9,6 +9,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +31,8 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
   const [notifications, setNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [timezoneModalVisible, setTimezoneModalVisible] = useState(false);
 
   // TODO: Get actual user ID from auth context/state
   const currentUserId = 1;
@@ -211,19 +215,33 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
                 icon={<Ionicons name="notifications-outline" size={20} color={colors.textSecondary} />}
               />
 
-              <FormDropdown
-                label="Language"
-                value={language}
-                options={getLanguageOptions()}
-                onChange={setLanguage}
-              />
+              <TouchableOpacity
+                style={styles.preferenceRow}
+                onPress={() => setLanguageModalVisible(true)}
+              >
+                <View style={styles.preferenceLeft}>
+                  <Ionicons name="language-outline" size={20} color={colors.textSecondary} />
+                  <Text style={styles.preferenceLabel}>Language</Text>
+                </View>
+                <View style={styles.preferenceRight}>
+                  <Text style={styles.preferenceValue}>{getLanguageOptions().find(o => o.value === language)?.label || 'English'}</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </View>
+              </TouchableOpacity>
 
-              <FormDropdown
-                label="Timezone"
-                value={timezone}
-                options={getTimezoneOptions()}
-                onChange={setTimezone}
-              />
+              <TouchableOpacity
+                style={styles.preferenceRow}
+                onPress={() => setTimezoneModalVisible(true)}
+              >
+                <View style={styles.preferenceLeft}>
+                  <Ionicons name="time-outline" size={20} color={colors.textSecondary} />
+                  <Text style={styles.preferenceLabel}>Timezone</Text>
+                </View>
+                <View style={styles.preferenceRight}>
+                  <Text style={styles.preferenceValue}>{getTimezoneOptions().find(o => o.value === timezone)?.label?.split('(')[0].trim() || 'UTC'}</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -252,6 +270,92 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
           onClose={() => setChangePasswordModalVisible(false)}
           onChangePassword={handlePasswordChange}
         />
+
+        {/* Language Modal */}
+        <Modal
+          visible={languageModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setLanguageModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setLanguageModalVisible(false)}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Language</Text>
+                <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
+                  <Ionicons name="close" size={24} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={getLanguageOptions()}
+                keyExtractor={(item) => item.value}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.modalOption, item.value === language && styles.modalOptionSelected]}
+                    onPress={() => {
+                      setLanguage(item.value);
+                      setLanguageModalVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.modalOptionText, item.value === language && styles.modalOptionTextSelected]}>
+                      {item.label}
+                    </Text>
+                    {item.value === language && (
+                      <Ionicons name="checkmark" size={20} color={colors.schoolAccent} />
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Timezone Modal */}
+        <Modal
+          visible={timezoneModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setTimezoneModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setTimezoneModalVisible(false)}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Timezone</Text>
+                <TouchableOpacity onPress={() => setTimezoneModalVisible(false)}>
+                  <Ionicons name="close" size={24} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={getTimezoneOptions()}
+                keyExtractor={(item) => item.value}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.modalOption, item.value === timezone && styles.modalOptionSelected]}
+                    onPress={() => {
+                      setTimezone(item.value);
+                      setTimezoneModalVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.modalOptionText, item.value === timezone && styles.modalOptionTextSelected]}>
+                      {item.label}
+                    </Text>
+                    {item.value === timezone && (
+                      <Ionicons name="checkmark" size={20} color={colors.schoolAccent} />
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -372,6 +476,59 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: colors.textPrimary,
+  },
+  preferenceRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  preferenceValue: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    width: '85%',
+    maxHeight: '60%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  modalOptionSelected: {
+    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: colors.textPrimary,
+  },
+  modalOptionTextSelected: {
+    color: colors.schoolAccent,
+    fontWeight: '600',
   },
   actionsSection: {
     paddingHorizontal: 24,

@@ -165,12 +165,5 @@ export const getTimezoneOptions = () => [
  * Get language options
  */
 export const getLanguageOptions = () => [
-  { label: 'English (US)', value: 'en' },
-  { label: 'English (UK)', value: 'en-gb' },
-  { label: 'Spanish', value: 'es' },
-  { label: 'French', value: 'fr' },
-  { label: 'German', value: 'de' },
-  { label: 'Portuguese', value: 'pt' },
-  { label: 'Japanese', value: 'ja' },
-  { label: 'Chinese (Simplified)', value: 'zh-cn' },
+  { label: 'English', value: 'en' },
 ];

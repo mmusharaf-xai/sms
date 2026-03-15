@@ -277,6 +277,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     backgroundColor: colors.white,
     paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 16,
   },
   searchBar: {
@@ -297,7 +298,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   actionContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 12,
