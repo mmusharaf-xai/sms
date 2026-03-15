@@ -3,3 +3,6 @@ export { default as FormInput } from './FormInput';
 export { default as PrimaryButton } from './PrimaryButton';
 export { default as FormError } from './FormError';
 export { default as FormLink } from './FormLink';
+export { default as SearchBar } from './SearchBar';
+export { default as ActionButton } from './ActionButton';
+export { default as SchoolCard } from './SchoolCard';

@@ -7,19 +7,17 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LoginScreenHeader, LoginForm } from '../components/login';
 import { FormLink } from '../components/shared';
 import { colors } from '../utils/colors';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
-interface LoginScreenProps {
-  onNavigateToSignup: () => void;
-  onLoginSuccess: () => void;
-}
+type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-const LoginScreen: React.FC<LoginScreenProps> = ({
-  onNavigateToSignup,
-  onLoginSuccess,
-}) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
+  const onNavigateToSignup = () => navigation.navigate('Signup');
+  const onLoginSuccess = () => navigation.replace('Home');
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView

@@ -36,6 +36,7 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
+        id={undefined}
         initialRouteName="Login"
         screenOptions={{
           headerShown: false,

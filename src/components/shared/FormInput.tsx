@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TextInputProps,
   ViewStyle,
+  TextStyle,
 } from 'react-native';
 import { colors } from '../../utils/colors';
 
@@ -13,6 +14,7 @@ interface FormInputProps extends Omit<TextInputProps, 'style'> {
   label: string;
   error?: string;
   containerStyle?: ViewStyle;
+  textInputStyle?: TextStyle;
   rightElement?: React.ReactNode;
 }
 
@@ -20,6 +22,7 @@ const FormInput: React.FC<FormInputProps> = ({
   label,
   error,
   containerStyle,
+  textInputStyle,
   rightElement,
   ...textInputProps
 }) => {
@@ -30,7 +33,7 @@ const FormInput: React.FC<FormInputProps> = ({
         {rightElement}
       </View>
       <TextInput
-        style={[styles.input, error && styles.inputError]}
+        style={[styles.input, error && styles.inputError, textInputStyle]}
         placeholderTextColor={colors.textMuted}
         {...textInputProps}
       />
