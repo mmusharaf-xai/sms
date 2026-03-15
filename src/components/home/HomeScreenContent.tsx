@@ -7,8 +7,10 @@ import {
   FlatList,
   RefreshControl,
   Alert,
+  TouchableOpacity,
+  TextInput,
 } from 'react-native';
-import { SearchBar, ActionButton, SchoolCard } from '../shared';
+import { Ionicons } from '@expo/vector-icons';
 import CreateSchoolModal from './CreateSchoolModal';
 import JoinSchoolModal from './JoinSchoolModal';
 import { colors } from '../../utils/colors';
@@ -23,7 +25,6 @@ const HomeScreenContent: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [schools, setSchools] = useState<UserSchoolWithSchool[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<UserSchoolWithSchool[]>([]);
-  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [joinModalVisible, setJoinModalVisible] = useState(false);
@@ -91,59 +92,111 @@ const HomeScreenContent: React.FC = () => {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const renderSchoolItem = ({ item }: { item: UserSchoolWithSchool }) => (
-    <SchoolCard
-      school={item.school}
-      role={item.role}
-      onPress={() => {
-        // TODO: Navigate to school detail screen
-        console.log('Selected school:', item.school.id);
-      }}
-    />
+    <TouchableOpacity
+      style={styles.schoolItem}
+      onPress={() => console.log('Selected school:', item.school.id)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.schoolAvatar}>
+        <Text style={styles.schoolInitials}>{getInitials(item.school.name)}</Text>
+      </View>
+      <View style={styles.schoolInfo}>
+        <Text style={styles.schoolName} numberOfLines={1}>
+          {item.school.name}
+        </Text>
+        <Text style={styles.schoolMeta} numberOfLines={1}>
+          {item.role.charAt(0).toUpperCase() + item.role.slice(1)} • Since 2024
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+    </TouchableOpacity>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyTitle}>No Schools Yet</Text>
+      <View style={styles.emptyIcon}>
+        <Ionicons name="school-outline" size={32} color={colors.textMuted} />
+      </View>
       <Text style={styles.emptyDescription}>
-        Create a new school or join an existing one using a school code.
+        Don't see your school? Try searching for the exact name or contact your school admin for a link.
       </Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerSpacer} />
         <Text style={styles.headerTitle}>My Schools</Text>
+        <TouchableOpacity style={styles.accountButton}>
+          <Ionicons name="person-circle" size={28} color={colors.schoolNavy} />
+        </TouchableOpacity>
+      </View>
 
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Search schools..."
-          onClear={() => setSearchQuery('')}
-        />
-
-        <View style={styles.actionButtonsContainer}>
-          <ActionButton
-            title="Create School"
-            icon="add-circle-outline"
-            onPress={() => setCreateModalVisible(true)}
-            variant="primary"
-          />
-          <View style={styles.buttonSpacer} />
-          <ActionButton
-            title="Join School"
-            icon="enter-outline"
-            onPress={() => setJoinModalVisible(true)}
-            variant="secondary"
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color={colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Find your school"
+            placeholderTextColor={colors.textMuted}
           />
         </View>
+      </View>
 
-        <Text style={styles.sectionTitle}>
-          {filteredSchools.length > 0
-            ? `Your Schools (${filteredSchools.length})`
-            : 'Your Schools'}
-        </Text>
+      {/* Action Buttons */}
+      <View style={styles.actionContainer}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => setCreateModalVisible(true)}
+          activeOpacity={0.9}
+        >
+          <View style={styles.primaryButtonIcon}>
+            <Ionicons name="add-circle" size={20} color={colors.white} />
+          </View>
+          <View style={styles.buttonTextContainer}>
+            <Text style={styles.primaryButtonTitle}>Create School</Text>
+            <Text style={styles.primaryButtonSubtitle}>Register as an administrator</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => setJoinModalVisible(true)}
+          activeOpacity={0.9}
+        >
+          <View style={styles.secondaryButtonIcon}>
+            <Ionicons name="people" size={20} color={colors.schoolNavy} />
+          </View>
+          <View style={styles.buttonTextContainer}>
+            <Text style={styles.secondaryButtonTitle}>Join a School</Text>
+            <Text style={styles.secondaryButtonSubtitle}>Request access with a code</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Your Schools Section */}
+      <View style={styles.schoolsSection}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Your Schools</Text>
+          {filteredSchools.length > 0 && (
+            <Text style={styles.viewAllText}>View All</Text>
+          )}
+        </View>
 
         <FlatList
           data={filteredSchools}
@@ -162,6 +215,7 @@ const HomeScreenContent: React.FC = () => {
         />
       </View>
 
+      {/* Modals */}
       <CreateSchoolModal
         visible={createModalVisible}
         onClose={() => setCreateModalVisible(false)}
@@ -184,53 +238,206 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  headerSpacer: {
+    width: 40,
   },
   headerTitle: {
-    fontSize: 28,
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 18,
     fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: 20,
+    color: colors.schoolNavy,
   },
-  actionButtonsContainer: {
+  accountButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: colors.background,
+  },
+  searchContainer: {
+    backgroundColor: colors.white,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  searchBar: {
     flexDirection: 'row',
-    marginTop: 16,
-    marginBottom: 24,
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
+    height: 48,
   },
-  buttonSpacer: {
-    width: 12,
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.textPrimary,
+    paddingVertical: 0,
+    marginLeft: 8,
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  primaryButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    backgroundColor: colors.schoolNavy,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  primaryButtonIcon: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 8,
+    borderRadius: 8,
+  },
+  buttonTextContainer: {
+    flex: 1,
+  },
+  primaryButtonTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.white,
+  },
+  primaryButtonSubtitle: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+  },
+  secondaryButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  secondaryButtonIcon: {
+    backgroundColor: 'rgba(30, 41, 59, 0.1)',
+    padding: 8,
+    borderRadius: 8,
+  },
+  secondaryButtonTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.schoolNavy,
+  },
+  secondaryButtonSubtitle: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  schoolsSection: {
+    flex: 1,
+    paddingTop: 8,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   sectionTitle: {
     fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.schoolNavy,
+  },
+  viewAllText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 12,
+    color: colors.schoolAccent,
   },
   listContent: {
-    paddingBottom: 20,
     flexGrow: 1,
   },
-  emptyContainer: {
+  schoolItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  schoolAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  schoolInitials: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.schoolAccent,
+  },
+  schoolInfo: {
     flex: 1,
+    marginRight: 8,
+  },
+  schoolName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  schoolMeta: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
+    paddingHorizontal: 32,
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 8,
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   emptyDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: 32,
     lineHeight: 20,
+    fontStyle: 'italic',
   },
 });
 

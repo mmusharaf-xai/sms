@@ -17,7 +17,10 @@ type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const onNavigateToSignup = () => navigation.navigate('Signup');
-  const onLoginSuccess = () => navigation.replace('Home');
+  const onLoginSuccess = () => navigation.reset({
+    index: 0,
+    routes: [{ name: 'Home' }],
+  });
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
