@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "SchoolManagementSystem",
+    "slug": "school-management-system",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {},
+    "web": {},
+    "scheme": "school-management-system",
+    "plugins": [
+      "expo-sqlite"
+    ]
+  }
+}

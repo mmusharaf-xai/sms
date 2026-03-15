@@ -1,1 +1,1 @@
-## React Native With Expo App
+## React Native With Expo App for school management system
