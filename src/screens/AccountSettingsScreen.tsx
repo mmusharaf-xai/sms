@@ -215,6 +215,8 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
                 icon={<Ionicons name="notifications-outline" size={20} color={colors.textSecondary} />}
               />
 
+              <View style={styles.preferenceSeparator} />
+
               <TouchableOpacity
                 style={styles.preferenceRow}
                 onPress={() => setLanguageModalVisible(true)}
@@ -476,6 +478,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: colors.textPrimary,
+  },
+  preferenceSeparator: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: 16,
   },
   preferenceRight: {
     flexDirection: 'row',
