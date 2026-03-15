@@ -1,5 +1,8 @@
 export { default as AppLogo } from './AppLogo';
 export { default as FormInput } from './FormInput';
+export { default as FormDropdown } from './FormDropdown';
+export { default as FormToggle } from './FormToggle';
+export { default as ProfileImagePicker } from './ProfileImagePicker';
 export { default as PrimaryButton } from './PrimaryButton';
 export { default as FormError } from './FormError';
 export { default as FormLink } from './FormLink';

@@ -5,6 +5,10 @@ export const users = sqliteTable('users', {
   fullName: text('full_name').notNull(),
   email: text('email').notNull().unique(),
   password: text('password').notNull(),
+  avatar: text('avatar'),
+  timezone: text('timezone').$defaultFn(() => 'UTC'),
+  language: text('language').$defaultFn(() => 'en'),
+  notifications: integer('notifications', { mode: 'boolean' }).$defaultFn(() => true),
   createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
 });

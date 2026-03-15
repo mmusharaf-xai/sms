@@ -10,18 +10,24 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import CreateSchoolModal from './CreateSchoolModal';
 import JoinSchoolModal from './JoinSchoolModal';
 import { colors } from '../../utils/colors';
 import { getUserSchools, createSchool, joinSchool } from '../../services/schoolService';
 import { School, UserSchool } from '../../../db/schema';
+import { RootStackParamList } from '../../navigation/AppNavigator';
 
 interface UserSchoolWithSchool extends UserSchool {
   school: School;
 }
 
-const HomeScreenContent: React.FC = () => {
+interface HomeScreenContentProps {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
+}
+
+const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [schools, setSchools] = useState<UserSchoolWithSchool[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<UserSchoolWithSchool[]>([]);
@@ -139,7 +145,10 @@ const HomeScreenContent: React.FC = () => {
       <View style={styles.header}>
         <View style={styles.headerSpacer} />
         <Text style={styles.headerTitle}>My Schools</Text>
-        <TouchableOpacity style={styles.accountButton}>
+        <TouchableOpacity 
+          style={styles.accountButton}
+          onPress={() => navigation.navigate('AccountSettings')}
+        >
           <Ionicons name="person-circle" size={28} color={colors.schoolNavy} />
         </TouchableOpacity>
       </View>
