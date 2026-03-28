@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Schools - School Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        'school-navy': '#1e293b',
+                        'school-blue': '#334155',
+                        'school-accent': '#2563eb',
+                        'background-light': '#f8fafc',
+                        'background-dark': '#0f172a',
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "system-ui", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        #account-screen {
+            display: none;
+        }
+        #account-screen:target {
+            display: flex;
+        }
+        #main-screen:has(+ #account-screen:target) {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden" id="main-screen">
+<div class="flex items-center bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 py-4 sticky top-0 z-10">
+<div class="w-10"></div> 
+<h1 class="text-xl font-bold leading-tight flex-1 text-center text-school-navy dark:text-white">My Schools</h1>
+<a class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-school-navy dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" href="#account-screen">
+<span class="material-symbols-outlined filled-icon">account_circle</span>
+</a>
+</div>
+<div class="px-4 py-4 bg-white dark:bg-slate-900">
+<label class="flex flex-col w-full">
+<div class="flex w-full items-stretch rounded-xl h-12 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+<div class="flex items-center justify-center pl-4 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full border-none bg-transparent focus:ring-0 px-4 text-base font-normal placeholder:text-slate-500" placeholder="Find your school" value=""/>
+</div>
+</label>
+</div>
+<div class="px-4 py-6 flex flex-col gap-4">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<button class="flex items-center gap-3 p-4 bg-school-navy text-white rounded-xl shadow-lg hover:bg-black transition-all duration-200 text-left">
+<div class="bg-white/20 p-2 rounded-lg shrink-0">
+<span class="material-symbols-outlined">add_circle</span>
+</div>
+<div>
+<p class="font-bold">Create School</p>
+<p class="text-xs text-white/80">Register as an administrator</p>
+</div>
+</button>
+<button class="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 text-school-navy dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-left">
+<div class="bg-school-navy/10 dark:bg-school-navy/30 p-2 rounded-lg shrink-0">
+<span class="material-symbols-outlined">group_add</span>
+</div>
+<div>
+<p class="font-bold">Join a School</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Request access with a code</p>
+</div>
+</button>
+</div>
+</div>
+<div class="flex-1">
+<div class="px-4 flex items-center justify-between pb-3 pt-2">
+<h2 class="text-lg font-bold tracking-tight text-school-navy dark:text-white">Your Schools</h2>
+<span class="text-sm font-semibold text-school-accent">View All</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer border-b border-slate-100 dark:border-slate-800">
+<div class="bg-primary/10 dark:bg-primary/20 flex items-center justify-center rounded-xl h-14 w-14 shrink-0 overflow-hidden">
+<img class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnyAfia8BJIhvHBbDCWJ8VTd-LYgx9Nt4bi0o2FtG-zUzgI8ZlR3BL6SqJV3ab9heLrovlhXYI5vcYGSMNl5FhKa_UWKrjrnLqMS3RApTDc0Q1PTws4MUiTk_ot0P9RvdnsjcLooyqIinPv-b7CujEpMrgAEmB4_s0VVVaSMB-96emgIrTgAzLz96MPOyILVFcvB-OWrrDHyK0Z6AHxK1GUvl41V2RSPy_XeSYQX8zCnXUpCQivNJTt4CsSx5UZS-O9bnkymGfTMIJ"/>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-base font-bold leading-normal line-clamp-1">Greenwood Academy</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal line-clamp-1">Administrator • Since 2021</p>
+</div>
+<div class="shrink-0 text-slate-400">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer border-b border-slate-100 dark:border-slate-800">
+<div class="bg-primary/10 dark:bg-primary/20 flex items-center justify-center rounded-xl h-14 w-14 shrink-0 overflow-hidden">
+<img class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXhjOAfH-g85-yiXT2GU7TBaQaePkjd_cnpQ-6-5ZXY0y7UTZQYnIvgnnpaB_CZvrn9fupHDNWkHIY2WCUgkLktCLttPiWuXLC6NNcmvv8YB_YvKYOPKfLNwHtpneXeaNiOA23L4WDqeX6fhwh7S99m0U5qPSaZRXPVY-O0geQAQJU7HZ_cB6bcM6YHEjK19Vj4EnNvJ4S3YwMUlrj1iFTE4LC3mC5ChB0bR_mYZL02TtiFi782Xmm0oq2pre4FN27CNz9hh7aQlys"/>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-base font-bold leading-normal line-clamp-1">St. Mary's International</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal line-clamp-1">Teacher • Since 2023</p>
+</div>
+<div class="shrink-0 text-slate-400">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer border-b border-slate-100 dark:border-slate-800">
+<div class="bg-primary/10 dark:bg-primary/20 flex items-center justify-center rounded-xl h-14 w-14 shrink-0 overflow-hidden">
+<img class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8jW_Gy9I9P_j0bku7p7hSRsUnqIhoYVzYQfBPX5p_--Ws20i_zQl6tIRHbqdj8UKYMb6UwvDGmjYdK6Q-QMQZhPpx1Xz2F0VncrQ4FM1pV7p1CG9w7MC2aAbjXaPURZZgicmfQpg5y5gHBMPg_vyKllRNa3vXcvPpAla3PlK3kD_glyduUA3B0m3MSzYb3kab4AcfS5WHn1sH-_dHP0oRBDz63MNzbXVis5zQ7_fcfcwvBe6kHPDszfKylwFZevn7TAlSLNR0xIjK"/>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-base font-bold leading-normal line-clamp-1">Oakwood Elementary</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal line-clamp-1">Parent • Since 2022</p>
+</div>
+<div class="shrink-0 text-slate-400">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="p-8 text-center">
+<div class="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-slate-400 text-3xl">school</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm italic">Don't see your school? Try searching for the exact name or contact your school admin for a link.</p>
+</div>
+</div>
+</div>
+<div class="fixed inset-0 bg-background-light dark:bg-background-dark flex flex-col z-20 overflow-y-auto" id="account-screen">
+<div class="flex items-center bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 py-4 sticky top-0 z-10">
+<a class="w-10 h-10 flex items-center justify-center rounded-full text-school-navy dark:text-white" href="#">
+<span class="material-symbols-outlined">arrow_back</span>
+</a>
+<h1 class="text-xl font-bold leading-tight flex-1 text-center text-school-navy dark:text-white">Account Settings</h1>
+<div class="w-10"></div>
+</div>
+<div class="bg-white dark:bg-slate-900 px-4 py-8 flex flex-col items-center border-b border-slate-100 dark:border-slate-800">
+<div class="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-5xl text-school-navy dark:text-white">account_circle</span>
+</div>
+<h2 class="text-2xl font-bold text-school-navy dark:text-white">Alex Johnson</h2>
+<p class="text-slate-500 dark:text-slate-400">alex.johnson@example.com</p>
+</div>
+<div class="px-4 py-8 flex flex-col gap-4">
+<button class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-left w-full group">
+<div class="flex items-center gap-3">
+<div class="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg text-blue-600 dark:text-blue-400">
+<span class="material-symbols-outlined">lock</span>
+</div>
+<p class="font-bold text-school-navy dark:text-white">Change Password</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-school-navy transition-colors">chevron_right</span>
+</button>
+<button class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-all text-left w-full group">
+<div class="flex items-center gap-3">
+<div class="bg-red-50 dark:bg-red-900/30 p-2 rounded-lg text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined">logout</span>
+</div>
+<p class="font-bold text-red-600 dark:text-red-400">Logout</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-red-600 transition-colors">chevron_right</span>
+</button>
+</div>
+<div class="mt-auto px-4 py-8 text-center">
+<p class="text-xs text-slate-400 dark:text-slate-500">Version 1.2.4 (2405)</p>
+</div>
+</div>
+
+</body></html>
