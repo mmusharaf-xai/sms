@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../utils/colors';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../context/AuthContext';
+import { SchoolSidebar } from '../components/sidebar';
 import {
   fetchUIConfig,
   UIComponent,
@@ -23,6 +24,7 @@ import {
   QuickActionItem,
   BannerConfig,
 } from '../services/uiConfigService';
+import { getUserSchoolRole } from '../services/sidebarService';
 
 type QuickAccessScreenProps = NativeStackScreenProps<RootStackParamList, 'QuickAccess'>;
 
@@ -69,7 +71,7 @@ const Skeleton: React.FC<{ width: number | string; height: number; borderRadius?
 // Skeleton loader for the entire screen
 const QuickAccessSkeleton: React.FC = () => {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header Skeleton */}
       <View style={styles.header}>
         <Skeleton width={40} height={40} borderRadius={20} />
@@ -81,7 +83,9 @@ const QuickAccessSkeleton: React.FC = () => {
         {/* Title Section Skeleton */}
         <View style={styles.titleSection}>
           <Skeleton width={140} height={32} borderRadius={8} />
-          <Skeleton width={280} height={16} borderRadius={8} />
+          <View style={{ marginTop: 8 }}>
+            <Skeleton width={280} height={16} borderRadius={8} />
+          </View>
         </View>
 
         {/* Stats Grid Skeleton */}
@@ -89,8 +93,12 @@ const QuickAccessSkeleton: React.FC = () => {
           {[1, 2, 3, 4].map((i) => (
             <View key={i} style={styles.statsCard}>
               <Skeleton width={48} height={48} borderRadius={12} />
-              <Skeleton width={60} height={28} borderRadius={6} />
-              <Skeleton width={80} height={14} borderRadius={6} />
+              <View style={{ marginTop: 12 }}>
+                <Skeleton width={60} height={28} borderRadius={6} />
+              </View>
+              <View style={{ marginTop: 4 }}>
+                <Skeleton width={80} height={14} borderRadius={6} />
+              </View>
             </View>
           ))}
         </View>
@@ -104,7 +112,9 @@ const QuickAccessSkeleton: React.FC = () => {
                 <Skeleton width={48} height={48} borderRadius={12} />
                 <View style={styles.actionTextContainer}>
                   <Skeleton width={160} height={18} borderRadius={6} />
-                  <Skeleton width={220} height={14} borderRadius={6} />
+                  <View style={{ marginTop: 4 }}>
+                    <Skeleton width={220} height={14} borderRadius={6} />
+                  </View>
                 </View>
               </View>
             ))}
@@ -116,7 +126,7 @@ const QuickAccessSkeleton: React.FC = () => {
           <Skeleton width="100%" height={140} borderRadius={16} />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -237,10 +247,13 @@ const Banner: React.FC<{ config: BannerConfig; onButtonPress: (route?: string) =
 
 const QuickAccessScreen: React.FC<QuickAccessScreenProps> = ({ route, navigation }) => {
   const { schoolId, schoolName } = route.params || {};
-  const { currentUser } = useAuth();
+  const { currentUser, currentUserId } = useAuth();
   const [components, setComponents] = useState<UIComponent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [userRole, setUserRole] = useState<string>('owner');
+  const [hasAccess, setHasAccess] = useState<boolean>(true);
 
   const fetchConfig = useCallback(async () => {
     if (!schoolId) {
@@ -269,13 +282,55 @@ const QuickAccessScreen: React.FC<QuickAccessScreenProps> = ({ route, navigation
     fetchConfig();
   }, [fetchConfig]);
 
-  const handleBack = () => {
-    navigation.goBack();
-  };
+  // Check user access to this school
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!schoolId || !currentUserId) {
+        setHasAccess(false);
+        return;
+      }
+      
+      const role = await getUserSchoolRole(schoolId, currentUserId);
+      if (role) {
+        setUserRole(role);
+        setHasAccess(true);
+      } else {
+        setHasAccess(false);
+      }
+    };
+    
+    checkAccess();
+  }, [schoolId, currentUserId]);
+
+  // Prevent swipe back gesture
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+    });
+  }, [navigation]);
 
   const handleMenuPress = () => {
-    // TODO: Open school sidebar/menu
-    console.log('Open menu');
+    setSidebarVisible(true);
+  };
+
+  const handleCloseSidebar = () => {
+    setSidebarVisible(false);
+  };
+
+  const handleNavigate = (route: string, params?: any) => {
+    if (route === 'QuickAccess') {
+      // Already on this page
+      return;
+    }
+    // For now, just log - these routes will be implemented later
+    console.log('Navigate to:', route, params);
+  };
+
+  const handleBackToSchools = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Home' }],
+    });
   };
 
   const handleProfilePress = () => {
@@ -302,8 +357,42 @@ const QuickAccessScreen: React.FC<QuickAccessScreenProps> = ({ route, navigation
     }
   };
 
+  // Show placeholder if user doesn't have access
+  if (!hasAccess) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.noAccessContainer}>
+          <Ionicons name="lock-closed" size={64} color={colors.textMuted} />
+          <Text style={styles.noAccessTitle}>Access Denied</Text>
+          <Text style={styles.noAccessText}>
+            You don't have permission to access this school. Please contact the school administrator.
+          </Text>
+          <TouchableOpacity
+            style={styles.backToSchoolsButton}
+            onPress={handleBackToSchools}
+          >
+            <Text style={styles.backToSchoolsButtonText}>Back to My Schools</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (loading) {
-    return <QuickAccessSkeleton />;
+    return (
+      <>
+        <QuickAccessSkeleton />
+        <SchoolSidebar
+          isVisible={sidebarVisible}
+          onClose={handleCloseSidebar}
+          schoolId={schoolId || 0}
+          userRole={userRole}
+          currentRoute="QuickAccess"
+          onNavigate={handleNavigate}
+          onBackToSchools={handleBackToSchools}
+        />
+      </>
+    );
   }
 
   if (error) {
@@ -316,6 +405,15 @@ const QuickAccessScreen: React.FC<QuickAccessScreenProps> = ({ route, navigation
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
+        <SchoolSidebar
+          isVisible={sidebarVisible}
+          onClose={handleCloseSidebar}
+          schoolId={schoolId || 0}
+          userRole={userRole}
+          currentRoute="QuickAccess"
+          onNavigate={handleNavigate}
+          onBackToSchools={handleBackToSchools}
+        />
       </SafeAreaView>
     );
   }
@@ -324,16 +422,15 @@ const QuickAccessScreen: React.FC<QuickAccessScreenProps> = ({ route, navigation
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={handleMenuPress} style={styles.headerButton}>
+            <Ionicons name="menu" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {schoolName || 'School'}
         </Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity onPress={handleMenuPress} style={styles.headerButton}>
-            <Ionicons name="menu" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
           <TouchableOpacity onPress={handleProfilePress}>
             {currentUser?.avatar ? (
               <Image
@@ -359,6 +456,16 @@ const QuickAccessScreen: React.FC<QuickAccessScreenProps> = ({ route, navigation
           <View key={component.id}>{renderComponent(component)}</View>
         ))}
       </ScrollView>
+
+      <SchoolSidebar
+        isVisible={sidebarVisible}
+        onClose={handleCloseSidebar}
+        schoolId={schoolId || 0}
+        userRole={userRole}
+        currentRoute="QuickAccess"
+        onNavigate={handleNavigate}
+        onBackToSchools={handleBackToSchools}
+      />
     </SafeAreaView>
   );
 };
@@ -371,11 +478,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.white,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     paddingHorizontal: 16,
     paddingVertical: 12,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 80,
   },
   headerButton: {
     width: 40,
@@ -395,7 +508,8 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'flex-end',
+    width: 80,
   },
   profileImage: {
     width: 36,
@@ -579,6 +693,39 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: 14,
+    fontWeight: '600',
+    color: colors.white,
+  },
+  // No access state
+  noAccessContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 16,
+  },
+  noAccessTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    marginTop: 16,
+  },
+  noAccessText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginTop: 8,
+  },
+  backToSchoolsButton: {
+    backgroundColor: colors.schoolNavy,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 24,
+  },
+  backToSchoolsButtonText: {
+    fontSize: 15,
     fontWeight: '600',
     color: colors.white,
   },
