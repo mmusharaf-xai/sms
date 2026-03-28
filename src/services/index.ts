@@ -3,3 +3,4 @@ export * from './schoolService';
 export * from './userService';
 export * from './uiConfigService';
 export * from './sidebarService';
+export * from './settingsConfigService';

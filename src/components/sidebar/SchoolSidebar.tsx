@@ -214,7 +214,11 @@ const SchoolSidebar: React.FC<SchoolSidebarProps> = ({
     onClose();
     // Small delay to let close animation start
     setTimeout(() => {
-      onNavigate(item.route, { schoolId, schoolName: config?.schoolName });
+      if (item.route === 'SchoolSettings') {
+        onNavigate(item.route, { schoolId, schoolName: config?.schoolName });
+      } else {
+        onNavigate(item.route, { schoolId, schoolName: config?.schoolName });
+      }
     }, 150);
   };
 
