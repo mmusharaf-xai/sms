@@ -88,3 +88,95 @@ export const validateSignupForm = (
 
   return errors;
 };
+
+// School Registration Validation
+export const validateSchoolName = (name: string): ValidationResult => {
+  if (!name || name.trim() === '') {
+    return { isValid: false, error: 'School name is required' };
+  }
+
+  if (name.trim().length < 3) {
+    return { isValid: false, error: 'School name must be at least 3 characters' };
+  }
+
+  return { isValid: true };
+};
+
+export const validateSchoolAddress = (address: string): ValidationResult => {
+  if (!address || address.trim() === '') {
+    return { isValid: false, error: 'Address is required' };
+  }
+
+  if (address.trim().length < 10) {
+    return { isValid: false, error: 'Please enter a complete address' };
+  }
+
+  return { isValid: true };
+};
+
+export const validateOwnerName = (ownerName: string): ValidationResult => {
+  if (!ownerName || ownerName.trim() === '') {
+    return { isValid: false, error: 'Owner name is required' };
+  }
+
+  if (ownerName.trim().length < 3) {
+    return { isValid: false, error: 'Owner name must be at least 3 characters' };
+  }
+
+  return { isValid: true };
+};
+
+export const validatePhoneNumber = (phone: string): ValidationResult => {
+  if (!phone || phone.trim() === '') {
+    return { isValid: false, error: 'Phone number is required' };
+  }
+
+  // Basic phone validation - allows various formats
+  const phoneRegex = /^[\d\s\-\+\(\)\.]{10,}$/;
+  if (!phoneRegex.test(phone.trim())) {
+    return { isValid: false, error: 'Please enter a valid phone number' };
+  }
+
+  return { isValid: true };
+};
+
+export interface SchoolRegistrationFormData {
+  name: string;
+  address: string;
+  ownerName: string;
+  phone: string;
+  email: string;
+}
+
+export const validateSchoolRegistrationForm = (
+  data: SchoolRegistrationFormData
+): Record<string, string | undefined> => {
+  const errors: Record<string, string | undefined> = {};
+
+  const nameResult = validateSchoolName(data.name);
+  if (!nameResult.isValid) {
+    errors.name = nameResult.error;
+  }
+
+  const addressResult = validateSchoolAddress(data.address);
+  if (!addressResult.isValid) {
+    errors.address = addressResult.error;
+  }
+
+  const ownerResult = validateOwnerName(data.ownerName);
+  if (!ownerResult.isValid) {
+    errors.ownerName = ownerResult.error;
+  }
+
+  const phoneResult = validatePhoneNumber(data.phone);
+  if (!phoneResult.isValid) {
+    errors.phone = phoneResult.error;
+  }
+
+  const emailResult = validateEmail(data.email);
+  if (!emailResult.isValid) {
+    errors.email = emailResult.error;
+  }
+
+  return errors;
+};

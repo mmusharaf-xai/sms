@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen } from '../screens';
+import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen } from '../screens';
 import { initDb } from '../../db/connection';
 
 export type RootStackParamList = {
@@ -9,6 +9,7 @@ export type RootStackParamList = {
   Signup: undefined;
   Home: undefined;
   AccountSettings: undefined;
+  RegisterSchool: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,6 +48,7 @@ const AppNavigator: React.FC = () => {
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+        <Stack.Screen name="RegisterSchool" component={RegisterSchoolScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
