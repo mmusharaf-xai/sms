@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen } from '../screens';
 import { initDb } from '../../db/connection';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -14,8 +15,9 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const AppNavigator: React.FC = () => {
+const AppNavigatorContent: React.FC = () => {
   const [dbInitialized, setDbInitialized] = useState(false);
+  const { currentUser, isLoading } = useAuth();
 
   useEffect(() => {
     const initialize = async () => {
@@ -31,7 +33,7 @@ const AppNavigator: React.FC = () => {
     initialize();
   }, []);
 
-  if (!dbInitialized) {
+  if (!dbInitialized || isLoading) {
     return null;
   }
 
@@ -39,7 +41,7 @@ const AppNavigator: React.FC = () => {
     <NavigationContainer>
       <Stack.Navigator
         id={undefined}
-        initialRouteName="Login"
+        initialRouteName={currentUser ? 'Home' : 'Login'}
         screenOptions={{
           headerShown: false,
         }}
@@ -51,6 +53,14 @@ const AppNavigator: React.FC = () => {
         <Stack.Screen name="RegisterSchool" component={RegisterSchoolScreen} />
       </Stack.Navigator>
     </NavigationContainer>
+  );
+};
+
+const AppNavigator: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppNavigatorContent />
+    </AuthProvider>
   );
 };
 

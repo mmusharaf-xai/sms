@@ -20,10 +20,12 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { getUserById, updateUserProfile, changePassword, getTimezoneOptions, getLanguageOptions } from '../services/userService';
 import { User } from '../../db/schema';
 import ChangePasswordModal from '../components/settings/ChangePasswordModal';
+import { useAuth } from '../context/AuthContext';
 
 type AccountSettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'AccountSettings'>;
 
 const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigation }) => {
+  const { currentUserId, logout, setCurrentUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [fullName, setFullName] = useState('');
   const [timezone, setTimezone] = useState('UTC');
@@ -34,10 +36,8 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [timezoneModalVisible, setTimezoneModalVisible] = useState(false);
 
-  // TODO: Get actual user ID from auth context/state
-  const currentUserId = 1;
-
   const fetchUser = useCallback(async () => {
+    if (!currentUserId) return;
     const result = await getUserById(currentUserId);
     if (result.success && result.user) {
       setUser(result.user);
@@ -71,13 +71,14 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
   };
 
   const handleRemovePhoto = async () => {
-    if (user) {
+    if (user && currentUserId) {
       await updateUserProfile(currentUserId, { avatar: null });
       setUser({ ...user, avatar: null });
     }
   };
 
   const handleSaveChanges = async () => {
+    if (!currentUserId) return;
     setLoading(true);
     const result = await updateUserProfile(currentUserId, {
       fullName,
@@ -88,6 +89,11 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
     setLoading(false);
 
     if (result.success) {
+      // Update the current user in auth context
+      const updatedResult = await getUserById(currentUserId);
+      if (updatedResult.success && updatedResult.user) {
+        await setCurrentUser(updatedResult.user);
+      }
       Alert.alert('Success', 'Profile updated successfully');
       fetchUser();
     } else {
@@ -104,8 +110,8 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
         {
           text: 'Log Out',
           style: 'destructive',
-          onPress: () => {
-            // TODO: Clear auth state and navigate to Login
+          onPress: async () => {
+            await logout();
             navigation.reset({
               index: 0,
               routes: [{ name: 'Login' }],
@@ -117,6 +123,9 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
   };
 
   const handlePasswordChange = async (current: string, newPass: string) => {
+    if (!currentUserId) {
+      throw new Error('You must be logged in to change password');
+    }
     const result = await changePassword(currentUserId, current, newPass);
     if (!result.success) {
       throw new Error(result.error || 'Failed to change password');

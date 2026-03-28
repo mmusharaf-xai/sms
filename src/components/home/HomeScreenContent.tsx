@@ -17,6 +17,7 @@ import { colors } from '../../utils/colors';
 import { getUserSchools, joinSchool } from '../../services/schoolService';
 import { School, UserSchool } from '../../../db/schema';
 import { RootStackParamList } from '../../navigation/AppNavigator';
+import { useAuth } from '../../context/AuthContext';
 
 interface UserSchoolWithSchool extends UserSchool {
   school: School;
@@ -27,6 +28,7 @@ interface HomeScreenContentProps {
 }
 
 const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => {
+  const { currentUserId } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [schools, setSchools] = useState<UserSchoolWithSchool[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<UserSchoolWithSchool[]>([]);
@@ -34,10 +36,8 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
   const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // TODO: Get actual user ID from auth context/state
-  const currentUserId = 1;
-
   const fetchSchools = useCallback(async () => {
+    if (!currentUserId) return;
     const result = await getUserSchools(currentUserId);
     if (result.success && result.userSchools) {
       setSchools(result.userSchools as UserSchoolWithSchool[]);
@@ -73,6 +73,7 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
   };
 
   const handleJoinSchool = async (code: string) => {
+    if (!currentUserId) return;
     setActionLoading(true);
     const result = await joinSchool(code, currentUserId);
     setActionLoading(false);
@@ -93,6 +94,11 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
       .slice(0, 2);
   };
 
+  const getSchoolYear = (createdAt: string | undefined) => {
+    if (!createdAt) return new Date().getFullYear();
+    return new Date(createdAt).getFullYear();
+  };
+
   const renderSchoolItem = ({ item }: { item: UserSchoolWithSchool }) => (
     <TouchableOpacity
       style={styles.schoolItem}
@@ -107,7 +113,7 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
           {item.school.name}
         </Text>
         <Text style={styles.schoolMeta} numberOfLines={1}>
-          {item.role.charAt(0).toUpperCase() + item.role.slice(1)} • Since 2024
+          {item.role.charAt(0).toUpperCase() + item.role.slice(1)} • Since {getSchoolYear(item.school.createdAt)}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />

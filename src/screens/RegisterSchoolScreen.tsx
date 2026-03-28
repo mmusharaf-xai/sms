@@ -17,10 +17,12 @@ import { colors } from '../utils/colors';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { registerSchool, RegisterSchoolData } from '../services/schoolService';
 import { validateSchoolRegistrationForm } from '../utils/validation';
+import { useAuth } from '../context/AuthContext';
 
 type RegisterSchoolScreenProps = NativeStackScreenProps<RootStackParamList, 'RegisterSchool'>;
 
 const RegisterSchoolScreen: React.FC<RegisterSchoolScreenProps> = ({ navigation }) => {
+  const { currentUserId } = useAuth();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [ownerName, setOwnerName] = useState('');
@@ -29,9 +31,6 @@ const RegisterSchoolScreen: React.FC<RegisterSchoolScreenProps> = ({ navigation 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-
-  // TODO: Get actual user ID from auth context/state
-  const currentUserId = 1;
 
   const handleBack = () => {
     navigation.goBack();
@@ -51,6 +50,11 @@ const RegisterSchoolScreen: React.FC<RegisterSchoolScreenProps> = ({ navigation 
   };
 
   const handleSubmit = async () => {
+    if (!currentUserId) {
+      setError('You must be logged in to register a school');
+      return;
+    }
+
     setError(undefined);
     setFieldErrors({});
 
