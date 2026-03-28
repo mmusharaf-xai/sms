@@ -3,18 +3,17 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   TextInput,
   Animated,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../utils/colors';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../context/AuthContext';
-import { SchoolSidebar } from '../components/sidebar';
 import { getUserSchoolRole } from '../services/sidebarService';
 import {
   fetchSettingsConfig,
@@ -199,7 +198,6 @@ const SchoolSettingsScreen: React.FC<SchoolSettingsScreenProps> = ({ route, navi
   const [version, setVersion] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
-  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [userRole, setUserRole] = useState<string>('owner');
   const [hasAccess, setHasAccess] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -261,22 +259,6 @@ const SchoolSettingsScreen: React.FC<SchoolSettingsScreenProps> = ({ route, navi
     navigation.goBack();
   };
 
-  const handleMenuPress = () => {
-    setSidebarVisible(true);
-  };
-
-  const handleCloseSidebar = () => {
-    setSidebarVisible(false);
-  };
-
-  const handleNavigate = (routeName: string, params?: any) => {
-    if (routeName === 'SchoolSettings') {
-      return;
-    }
-    // Navigate to other settings pages
-    console.log('Navigate to:', routeName, params);
-  };
-
   const handleBackToSchools = () => {
     navigation.reset({
       index: 0,
@@ -324,20 +306,7 @@ const SchoolSettingsScreen: React.FC<SchoolSettingsScreenProps> = ({ route, navi
   }
 
   if (loading) {
-    return (
-      <>
-        <SettingsSkeleton />
-        <SchoolSidebar
-          isVisible={sidebarVisible}
-          onClose={handleCloseSidebar}
-          schoolId={schoolId || 0}
-          userRole={userRole}
-          currentRoute="SchoolSettings"
-          onNavigate={handleNavigate}
-          onBackToSchools={handleBackToSchools}
-        />
-      </>
-    );
+    return <SettingsSkeleton />;
   }
 
   if (error) {
@@ -350,15 +319,6 @@ const SchoolSettingsScreen: React.FC<SchoolSettingsScreenProps> = ({ route, navi
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
-        <SchoolSidebar
-          isVisible={sidebarVisible}
-          onClose={handleCloseSidebar}
-          schoolId={schoolId || 0}
-          userRole={userRole}
-          currentRoute="SchoolSettings"
-          onNavigate={handleNavigate}
-          onBackToSchools={handleBackToSchools}
-        />
       </SafeAreaView>
     );
   }
@@ -368,16 +328,12 @@ const SchoolSettingsScreen: React.FC<SchoolSettingsScreenProps> = ({ route, navi
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={handleMenuPress} style={styles.headerButton}>
-            <Ionicons name="menu" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.headerTitle}>Settings</Text>
-        <View style={styles.headerRight}>
           <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
+        <Text style={styles.headerTitle}>Settings</Text>
+        <View style={styles.headerRight} />
       </View>
 
       <ScrollView
@@ -414,16 +370,6 @@ const SchoolSettingsScreen: React.FC<SchoolSettingsScreenProps> = ({ route, navi
           </View>
         )}
       </ScrollView>
-
-      <SchoolSidebar
-        isVisible={sidebarVisible}
-        onClose={handleCloseSidebar}
-        schoolId={schoolId || 0}
-        userRole={userRole}
-        currentRoute="SchoolSettings"
-        onNavigate={handleNavigate}
-        onBackToSchools={handleBackToSchools}
-      />
     </SafeAreaView>
   );
 };

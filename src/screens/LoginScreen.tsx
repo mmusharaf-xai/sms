@@ -2,11 +2,11 @@ import React from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LoginScreenHeader, LoginForm } from '../components/login';
 import { FormLink } from '../components/shared';
