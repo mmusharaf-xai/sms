@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export interface SidebarMenuItem {
   id: string;
   label: string;
@@ -16,6 +18,7 @@ export interface SidebarResult {
   success: boolean;
   config?: SidebarConfig;
   error?: string;
+  fromCache?: boolean;
 }
 
 export interface AccessCheckResult {
@@ -23,6 +26,76 @@ export interface AccessCheckResult {
   requiredRole?: string;
   currentRole?: string;
 }
+
+interface CachedSidebarData {
+  config: SidebarConfig;
+  timestamp: number;
+}
+
+const CACHE_KEY_PREFIX = '@sidebar_cache_';
+const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+
+/**
+ * Get cache key for a school
+ */
+const getCacheKey = (schoolId: number): string => {
+  return `${CACHE_KEY_PREFIX}${schoolId}`;
+};
+
+/**
+ * Get cached sidebar config
+ */
+const getCachedConfig = async (schoolId: number): Promise<CachedSidebarData | null> => {
+  try {
+    const cacheKey = getCacheKey(schoolId);
+    const cachedData = await AsyncStorage.getItem(cacheKey);
+    
+    if (!cachedData) return null;
+    
+    const parsed: CachedSidebarData = JSON.parse(cachedData);
+    const now = Date.now();
+    
+    // Check if cache is still valid (less than 1 hour old)
+    if (now - parsed.timestamp < CACHE_DURATION_MS) {
+      return parsed;
+    }
+    
+    // Cache expired, remove it
+    await AsyncStorage.removeItem(cacheKey);
+    return null;
+  } catch (error) {
+    console.error('Error reading sidebar cache:', error);
+    return null;
+  }
+};
+
+/**
+ * Save sidebar config to cache
+ */
+const setCachedConfig = async (schoolId: number, config: SidebarConfig): Promise<void> => {
+  try {
+    const cacheKey = getCacheKey(schoolId);
+    const cacheData: CachedSidebarData = {
+      config,
+      timestamp: Date.now(),
+    };
+    await AsyncStorage.setItem(cacheKey, JSON.stringify(cacheData));
+  } catch (error) {
+    console.error('Error saving sidebar cache:', error);
+  }
+};
+
+/**
+ * Clear sidebar cache for a school
+ */
+export const clearSidebarCache = async (schoolId: number): Promise<void> => {
+  try {
+    const cacheKey = getCacheKey(schoolId);
+    await AsyncStorage.removeItem(cacheKey);
+  } catch (error) {
+    console.error('Error clearing sidebar cache:', error);
+  }
+};
 
 // Default sidebar menu items for school
 const DEFAULT_MENU_ITEMS: SidebarMenuItem[] = [
@@ -79,14 +152,37 @@ const DEFAULT_MENU_ITEMS: SidebarMenuItem[] = [
 
 /**
  * Fetch sidebar configuration for a school
- * This simulates a server API call - replace with actual API when backend is ready
+ * Uses caching with 1-hour revalidation
  */
 export const fetchSidebarConfig = async (
   schoolId: number,
-  userRole: string
+  userRole: string,
+  forceRefresh: boolean = false
 ): Promise<SidebarResult> => {
   try {
-    // Simulate API delay
+    // Check cache first (unless force refresh is requested)
+    if (!forceRefresh) {
+      const cached = await getCachedConfig(schoolId);
+      if (cached) {
+        // Filter cached items based on user role
+        const accessibleItems = cached.config.items.filter((item) =>
+          item.requiredRole.includes(userRole as any)
+        );
+
+        if (accessibleItems.length > 0) {
+          return {
+            success: true,
+            config: {
+              ...cached.config,
+              items: accessibleItems,
+            },
+            fromCache: true,
+          };
+        }
+      }
+    }
+
+    // Simulate API delay for fresh fetch
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     // TODO: Replace with actual API call
@@ -106,15 +202,41 @@ export const fetchSidebarConfig = async (
       };
     }
 
+    const config: SidebarConfig = {
+      schoolName: 'Central Academy', // TODO: Fetch from school data
+      items: accessibleItems,
+    };
+
+    // Save to cache
+    await setCachedConfig(schoolId, config);
+
     return {
       success: true,
-      config: {
-        schoolName: 'Central Academy', // TODO: Fetch from school data
-        items: accessibleItems,
-      },
+      config,
+      fromCache: false,
     };
   } catch (error) {
     console.error('Fetch sidebar config error:', error);
+    
+    // Try to return cached data even if expired, as fallback
+    const cached = await getCachedConfig(schoolId);
+    if (cached) {
+      const accessibleItems = cached.config.items.filter((item) =>
+        item.requiredRole.includes(userRole as any)
+      );
+      
+      if (accessibleItems.length > 0) {
+        return {
+          success: true,
+          config: {
+            ...cached.config,
+            items: accessibleItems,
+          },
+          fromCache: true,
+        };
+      }
+    }
+    
     return {
       success: false,
       error: 'Failed to load sidebar configuration',

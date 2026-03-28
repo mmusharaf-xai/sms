@@ -20,6 +20,81 @@ import {
   SidebarConfig,
 } from '../../services/sidebarService';
 
+// Skeleton component for loading state
+const Skeleton: React.FC<{ width: number | string; height: number; borderRadius?: number }> = ({
+  width: w,
+  height,
+  borderRadius = 8,
+}) => {
+  const opacity = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.7,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.skeleton,
+        { width: w, height, borderRadius, opacity },
+      ]}
+    />
+  );
+};
+
+// Sidebar Skeleton Component
+const SidebarSkeleton: React.FC = () => {
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      {/* Header Skeleton */}
+      <View style={styles.schoolHeader}>
+        <Skeleton width={48} height={48} borderRadius={12} />
+        <View style={styles.schoolInfo}>
+          <Skeleton width={120} height={18} borderRadius={6} />
+          <View style={{ marginTop: 6 }}>
+            <Skeleton width={100} height={14} borderRadius={6} />
+          </View>
+        </View>
+      </View>
+
+      {/* Menu Items Skeleton */}
+      <ScrollView
+        style={styles.menuContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <View key={i} style={styles.menuItem}>
+            <Skeleton width={36} height={36} borderRadius={10} />
+            <View style={{ marginLeft: 12, flex: 1 }}>
+              <Skeleton width={100} height={16} borderRadius={6} />
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Bottom Button Skeleton */}
+      <View style={styles.bottomContainer}>
+        <Skeleton width="100%" height={50} borderRadius={12} />
+      </View>
+    </SafeAreaView>
+  );
+};
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.75;
 
@@ -202,50 +277,50 @@ const SchoolSidebar: React.FC<SchoolSidebarProps> = ({
           ]}
           {...panResponder.panHandlers}
         >
-          <SafeAreaView style={styles.safeArea}>
-            {/* School Header */}
-            <View style={styles.schoolHeader}>
-              <View style={styles.logoContainer}>
-                <Ionicons name="school" size={24} color={colors.white} />
-              </View>
-              <View style={styles.schoolInfo}>
-                <Text style={styles.appName}>EduManager</Text>
-                <Text style={styles.schoolName}>
-                  {config?.schoolName || 'Loading...'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Menu Items */}
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Loading...</Text>
-              </View>
-            ) : error ? (
+          {loading ? (
+            <SidebarSkeleton />
+          ) : error ? (
+            <SafeAreaView style={styles.safeArea}>
               <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
-            ) : (
+            </SafeAreaView>
+          ) : (
+            <SafeAreaView style={styles.safeArea}>
+              {/* School Header */}
+              <View style={styles.schoolHeader}>
+                <View style={styles.logoContainer}>
+                  <Ionicons name="school" size={24} color={colors.white} />
+                </View>
+                <View style={styles.schoolInfo}>
+                  <Text style={styles.appName}>EduManager</Text>
+                  <Text style={styles.schoolName}>
+                    {config?.schoolName || 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+
               <ScrollView
                 style={styles.menuContainer}
                 showsVerticalScrollIndicator={false}
               >
                 {config?.items.map(renderMenuItem)}
               </ScrollView>
-            )}
 
-            {/* Bottom Button */}
-            <View style={styles.bottomContainer}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={handleBackToSchools}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-                <Text style={styles.backButtonText}>Back to My Schools</Text>
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
+              {/* Bottom Button */}
+              <View style={styles.bottomContainer}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={handleBackToSchools}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+                  <Text style={styles.backButtonText}>Back to My Schools</Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -253,6 +328,9 @@ const SchoolSidebar: React.FC<SchoolSidebarProps> = ({
 };
 
 const styles = StyleSheet.create({
+  skeleton: {
+    backgroundColor: '#e2e8f0',
+  },
   container: {
     flex: 1,
     flexDirection: 'row',
@@ -310,20 +388,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 12,
   },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
   errorContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    gap: 12,
   },
   errorText: {
     fontSize: 14,
