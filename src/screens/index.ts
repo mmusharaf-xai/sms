@@ -3,3 +3,4 @@ export { default as SignupScreen } from './SignupScreen';
 export { default as HomeScreen } from './HomeScreen';
 export { default as AccountSettingsScreen } from './AccountSettingsScreen';
 export { default as RegisterSchoolScreen } from './RegisterSchoolScreen';
+export { default as QuickAccessScreen } from './QuickAccessScreen';

@@ -99,10 +99,17 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
     return new Date(createdAt).getFullYear();
   };
 
+  const handleSchoolPress = (school: School) => {
+    navigation.navigate('QuickAccess', {
+      schoolId: school.id,
+      schoolName: school.name,
+    });
+  };
+
   const renderSchoolItem = ({ item }: { item: UserSchoolWithSchool }) => (
     <TouchableOpacity
       style={styles.schoolItem}
-      onPress={() => console.log('Selected school:', item.school.id)}
+      onPress={() => handleSchoolPress(item.school)}
       activeOpacity={0.7}
     >
       <View style={styles.schoolAvatar}>
