@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Animated,
+  Image,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,46 +23,44 @@ import {
   QuickActionItem,
   BannerConfig,
 } from '../services/uiConfigService';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
 
 type QuickAccessScreenProps = NativeStackScreenProps<RootStackParamList, 'QuickAccess'>;
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48 - 12) / 2;
 
-// Skeleton component for loading state
+// Skeleton component for loading state using React Native's built-in Animated
 const Skeleton: React.FC<{ width: number | string; height: number; borderRadius?: number }> = ({
   width: w,
   height,
   borderRadius = 8,
 }) => {
-  const progress = useSharedValue(0);
+  const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    progress.value = withRepeat(
-      withTiming(1, { duration: 1500 }),
-      -1,
-      true
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.7,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+      ])
     );
+    animation.start();
+    return () => animation.stop();
   }, []);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(progress.value, [0, 1], [0.3, 0.7]);
-    return { opacity };
-  });
 
   return (
     <Animated.View
       style={[
         styles.skeleton,
-        { width: w, height, borderRadius },
-        animatedStyle,
+        { width: w, height, borderRadius, opacity },
       ]}
     />
   );
@@ -336,7 +336,7 @@ const QuickAccessScreen: React.FC<QuickAccessScreenProps> = ({ route, navigation
           </TouchableOpacity>
           <TouchableOpacity onPress={handleProfilePress}>
             {currentUser?.avatar ? (
-              <Animated.Image
+              <Image
                 source={{ uri: currentUser.avatar }}
                 style={styles.profileImage}
               />
