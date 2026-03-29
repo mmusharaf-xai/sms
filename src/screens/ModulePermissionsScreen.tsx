@@ -72,10 +72,7 @@ const PermissionsSkeleton: React.FC = () => (
     </View>
 
     <ScrollView contentContainerStyle={styles.scrollContent}>
-      {/* Module label */}
-      <View style={{ marginBottom: 8 }}>
-        <Skeleton width={140} height={13} borderRadius={6} />
-      </View>
+      {/* Module name */}
       <View style={{ marginBottom: 24 }}>
         <Skeleton width={200} height={28} borderRadius={8} />
       </View>
@@ -109,11 +106,6 @@ const PermissionsSkeleton: React.FC = () => (
           <Skeleton width={24} height={24} borderRadius={12} />
         </View>
       ))}
-
-      {/* Bottom button */}
-      <View style={{ marginTop: 24 }}>
-        <Skeleton width="100%" height={56} borderRadius={14} />
-      </View>
     </ScrollView>
   </SafeAreaView>
 );
@@ -364,10 +356,6 @@ const ModulePermissionsScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
-  const handleConfirmAll = () => {
-    handleSave();
-  };
-
   // ── Loading ───────────────────────────────────────────────────────
 
   if (loading) return <PermissionsSkeleton />;
@@ -419,8 +407,7 @@ const ModulePermissionsScreen: React.FC<Props> = ({ route, navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Configuring module label */}
-        <Text style={styles.configuringLabel}>CONFIGURING MODULE</Text>
+        {/* Module name */}
         <Text style={styles.moduleNameTitle}>{moduleName}</Text>
 
         {/* Full Access toggle card */}
@@ -461,25 +448,7 @@ const ModulePermissionsScreen: React.FC<Props> = ({ route, navigation }) => {
           />
         ))}
 
-        {/* Spacer for bottom button */}
-        <View style={{ height: 80 }} />
       </ScrollView>
-
-      {/* Fixed bottom button */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity
-          style={[styles.confirmButton, saving && styles.confirmButtonDisabled]}
-          onPress={handleConfirmAll}
-          disabled={saving}
-          activeOpacity={0.85}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <Text style={styles.confirmButtonText}>Confirm All Changes</Text>
-          )}
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -544,14 +513,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
 
-  // Configuring module label
-  configuringLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.schoolAccent,
-    letterSpacing: 1.2,
-    marginBottom: 6,
-  },
   moduleNameTitle: {
     fontSize: 26,
     fontWeight: 'bold',
@@ -702,30 +663,6 @@ const styles = StyleSheet.create({
   checkboxLabelSelectAll: {
     fontWeight: '600',
     color: colors.textSecondary,
-  },
-
-  // Bottom bar
-  bottomBar: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  confirmButton: {
-    backgroundColor: colors.schoolNavy,
-    borderRadius: 14,
-    paddingVertical: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  confirmButtonDisabled: {
-    opacity: 0.7,
-  },
-  confirmButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.white,
   },
 
   // Centered states
