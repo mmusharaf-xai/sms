@@ -216,7 +216,11 @@ const RoleConfigScreen: React.FC<Props> = ({ route, navigation }) => {
 
     if (result.success) {
       Alert.alert('Success', 'Role updated successfully.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+        {
+          text: 'OK',
+          onPress: () =>
+            navigation.navigate('OrganizationConfig', { schoolId, schoolName }),
+        },
       ]);
     } else {
       if (result.error?.toLowerCase().includes('name')) {
@@ -241,7 +245,11 @@ const RoleConfigScreen: React.FC<Props> = ({ route, navigation }) => {
             const result = await deleteRole(roleId, schoolId, currentUserId);
             if (result.success) {
               Alert.alert('Deleted', 'Role has been deleted.', [
-                { text: 'OK', onPress: () => navigation.goBack() },
+                {
+                  text: 'OK',
+                  onPress: () =>
+                    navigation.navigate('OrganizationConfig', { schoolId, schoolName }),
+                },
               ]);
             } else {
               Alert.alert('Error', result.error || 'Failed to delete role.');

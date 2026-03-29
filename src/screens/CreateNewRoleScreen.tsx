@@ -187,7 +187,11 @@ const CreateNewRoleScreen: React.FC<Props> = ({ route, navigation }) => {
 
     if (result.success) {
       Alert.alert('Success', `Role "${trimmed}" created successfully.`, [
-        { text: 'OK', onPress: () => navigation.goBack() },
+        {
+          text: 'OK',
+          onPress: () =>
+            navigation.navigate('OrganizationConfig', { schoolId, schoolName }),
+        },
       ]);
     } else {
       if (result.error?.toLowerCase().includes('name')) {

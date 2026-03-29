@@ -6,11 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { CommonActions } from '@react-navigation/native';
 import { colors } from '../utils/colors';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { ModulePermission } from '../services/roleService';
@@ -231,8 +231,6 @@ const ModulePermissionsScreen: React.FC<Props> = ({ route, navigation }) => {
     add: false,
   });
 
-  const [saving, setSaving] = useState(false);
-
   // ── Fetch module data from DB ─────────────────────────────────────
 
   const loadModule = useCallback(async () => {
@@ -337,23 +335,32 @@ const ModulePermissionsScreen: React.FC<Props> = ({ route, navigation }) => {
   });
 
   const handleSave = () => {
-    setSaving(true);
     const updatedPermission = buildPermission();
+    const targetName = returnScreen === 'CreateNewRole' ? 'CreateNewRole' : 'RoleConfig';
 
-    if (returnScreen === 'CreateNewRole') {
-      navigation.navigate('CreateNewRole', {
-        schoolId,
-        schoolName: route.params.schoolName,
-        updatedModule: { moduleKey, permission: updatedPermission },
+    // Atomically pop ModulePermissions off the stack AND merge
+    // the updated permission into the parent screen's params.
+    navigation.dispatch((state) => {
+      // Remove the current screen (last route) from the stack
+      const routes = state.routes.slice(0, -1).map((r) => {
+        if (r.name === targetName) {
+          return {
+            ...r,
+            params: {
+              ...(r.params as any),
+              updatedModule: { moduleKey, permission: updatedPermission },
+            },
+          };
+        }
+        return r;
       });
-    } else {
-      navigation.navigate('RoleConfig', {
-        schoolId,
-        schoolName: route.params.schoolName,
-        roleId: roleId!,
-        updatedModule: { moduleKey, permission: updatedPermission },
+
+      return CommonActions.reset({
+        ...state,
+        routes,
+        index: routes.length - 1,
       });
-    }
+    });
   };
 
   // ── Loading ───────────────────────────────────────────────────────
@@ -390,16 +397,11 @@ const ModulePermissionsScreen: React.FC<Props> = ({ route, navigation }) => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Module Permissions</Text>
         <TouchableOpacity
-          style={[styles.saveHeaderButton, saving && styles.saveHeaderButtonDisabled]}
+          style={styles.saveHeaderButton}
           onPress={handleSave}
-          disabled={saving}
           activeOpacity={0.85}
         >
-          {saving ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <Text style={styles.saveHeaderButtonText}>Save</Text>
-          )}
+          <Text style={styles.saveHeaderButtonText}>Save</Text>
         </TouchableOpacity>
       </View>
 
@@ -498,9 +500,6 @@ const styles = StyleSheet.create({
     minWidth: 70,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  saveHeaderButtonDisabled: {
-    opacity: 0.7,
   },
   saveHeaderButtonText: {
     fontSize: 15,
