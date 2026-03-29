@@ -20,10 +20,11 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../context/AuthContext';
 import {
   createRole,
-  MODULE_DEFINITIONS,
   RolePermissions,
   getModulePermissionSummary,
+  buildEmptyPermissionsFromModules,
 } from '../services/roleService';
+import { fetchSchoolModules, ModuleData } from '../services/moduleService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateNewRole'>;
 
@@ -54,45 +55,25 @@ const Skeleton: React.FC<{
   );
 };
 
-const CreateNewRoleSkeleton: React.FC = () => (
-  <SafeAreaView style={styles.container}>
-    <View style={styles.header}>
-      <Skeleton width={40} height={40} borderRadius={20} />
-      <Skeleton width={160} height={24} borderRadius={12} />
-      <Skeleton width={70} height={40} borderRadius={12} />
-    </View>
-    <ScrollView contentContainerStyle={styles.scrollContent}>
-      {/* Role name card skeleton */}
-      <View style={styles.card}>
-        <Skeleton width={100} height={16} borderRadius={6} />
-        <View style={{ marginTop: 12 }}>
-          <Skeleton width="100%" height={48} borderRadius={12} />
-        </View>
-      </View>
+// ── Inline module skeleton (shown inside the scroll while modules load) ─
 
-      {/* Permissions header skeleton */}
-      <View style={{ marginTop: 24, paddingHorizontal: 4 }}>
-        <Skeleton width={140} height={22} borderRadius={6} />
-        <View style={{ marginTop: 6 }}>
-          <Skeleton width={280} height={14} borderRadius={6} />
+const ModulesSkeleton: React.FC = () => (
+  <>
+    {[1, 2, 3, 4, 5, 6].map((i) => (
+      <View key={i} style={[styles.moduleRow, { marginTop: i === 1 ? 0 : 2 }]}>
+        <View style={styles.moduleIcon}>
+          <Skeleton width={24} height={24} borderRadius={6} />
         </View>
-      </View>
-
-      {/* Module cards skeleton */}
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <View key={i} style={[styles.moduleRow, { marginTop: 12 }]}>
-          <Skeleton width={48} height={48} borderRadius={12} />
-          <View style={{ marginLeft: 14, flex: 1 }}>
-            <Skeleton width={120} height={18} borderRadius={6} />
-            <View style={{ marginTop: 6 }}>
-              <Skeleton width={80} height={13} borderRadius={6} />
-            </View>
+        <View style={{ marginLeft: 14, flex: 1 }}>
+          <Skeleton width={120} height={18} borderRadius={6} />
+          <View style={{ marginTop: 6 }}>
+            <Skeleton width={80} height={13} borderRadius={6} />
           </View>
-          <Skeleton width={20} height={20} borderRadius={10} />
         </View>
-      ))}
-    </ScrollView>
-  </SafeAreaView>
+        <Skeleton width={20} height={20} borderRadius={10} />
+      </View>
+    ))}
+  </>
 );
 
 // ── Module row component ─────────────────────────────────────────────────
@@ -123,25 +104,42 @@ const CreateNewRoleScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const [roleName, setRoleName] = useState('');
   const [nameError, setNameError] = useState<string | undefined>();
-  const [permissions, setPermissions] = useState<RolePermissions>(() => {
-    const perms: RolePermissions = {};
-    for (const mod of MODULE_DEFINITIONS) {
-      perms[mod.id] = { read: [], update: [], delete: [], add: [], fullAccess: false };
-    }
-    return perms;
-  });
+  const [permissions, setPermissions] = useState<RolePermissions>({});
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  // Simulate initial load
+  // Module state – fetched from DB
+  const [schoolModules, setSchoolModules] = useState<ModuleData[]>([]);
+  const [modulesLoading, setModulesLoading] = useState(true);
+  const [modulesError, setModulesError] = useState<string | undefined>();
+
+  // ── Fetch modules from DB ───────────────────────────────────────────
+
+  const loadModules = useCallback(async () => {
+    setModulesLoading(true);
+    setModulesError(undefined);
+
+    const result = await fetchSchoolModules(schoolId);
+
+    if (result.success && result.modules) {
+      setSchoolModules(result.modules);
+      // Build empty permissions for each module
+      setPermissions(buildEmptyPermissionsFromModules(result.modules));
+    } else {
+      setModulesError(result.error || 'Failed to load modules');
+    }
+
+    setModulesLoading(false);
+  }, [schoolId]);
+
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 400);
-    return () => clearTimeout(timer);
-  }, []);
+    loadModules();
+  }, [loadModules]);
 
   useEffect(() => {
     navigation.setOptions({ gestureEnabled: false });
   }, [navigation]);
+
+  // ── Handlers ────────────────────────────────────────────────────────
 
   const handleNameChange = (value: string) => {
     setRoleName(value);
@@ -185,13 +183,12 @@ const CreateNewRoleScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
-  const handleModulePress = (_moduleId: string) => {
-    // Module permissions screen navigation — future enhancement
-    // For now we could show an alert or navigate to ModulePermissions screen
+  const handleModulePress = (_moduleKey: string) => {
+    // Module permissions screen — future enhancement
     Alert.alert('Coming Soon', 'Module permission configuration will be available soon.');
   };
 
-  if (loading) return <CreateNewRoleSkeleton />;
+  // ── Render ──────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.container}>
@@ -204,7 +201,7 @@ const CreateNewRoleScreen: React.FC<Props> = ({ route, navigation }) => {
         <TouchableOpacity
           style={[styles.saveHeaderButton, saving && styles.saveHeaderButtonDisabled]}
           onPress={handleSave}
-          disabled={saving}
+          disabled={saving || modulesLoading}
           activeOpacity={0.85}
         >
           {saving ? (
@@ -246,16 +243,28 @@ const CreateNewRoleScreen: React.FC<Props> = ({ route, navigation }) => {
             </Text>
           </View>
 
-          {/* Module list */}
-          {MODULE_DEFINITIONS.map((mod) => (
-            <ModuleRow
-              key={mod.id}
-              icon={mod.icon}
-              name={mod.name}
-              summary={getModulePermissionSummary(permissions[mod.id])}
-              onPress={() => handleModulePress(mod.id)}
-            />
-          ))}
+          {/* Module list — skeleton while loading, real data once fetched */}
+          {modulesLoading ? (
+            <ModulesSkeleton />
+          ) : modulesError ? (
+            <View style={styles.modulesErrorContainer}>
+              <Ionicons name="alert-circle-outline" size={32} color={colors.error} />
+              <Text style={styles.modulesErrorText}>{modulesError}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={loadModules}>
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            schoolModules.map((mod) => (
+              <ModuleRow
+                key={mod.key}
+                icon={mod.icon}
+                name={mod.name}
+                summary={getModulePermissionSummary(permissions[mod.key])}
+                onPress={() => handleModulePress(mod.key)}
+              />
+            ))
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -407,6 +416,29 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+
+  // Modules error state
+  modulesErrorContainer: {
+    alignItems: 'center',
+    padding: 24,
+    gap: 12,
+  },
+  modulesErrorText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: colors.schoolAccent,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.white,
   },
 });
 

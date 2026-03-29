@@ -1,6 +1,7 @@
 import { getDb } from '../../db/connection';
 import { roles, userSchools } from '../../db/schema';
 import { eq, and } from 'drizzle-orm';
+import { fetchSchoolModules, ModuleData } from './moduleService';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -13,7 +14,7 @@ export interface ModulePermission {
 }
 
 export interface RolePermissions {
-  [moduleId: string]: ModulePermission;
+  [moduleKey: string]: ModulePermission;
 }
 
 export interface RoleData {
@@ -38,85 +39,39 @@ export interface RolesListResult {
   error?: string;
 }
 
-// ── Default module definitions ─────────────────────────────────────────
+// ── Permission helpers (now work with dynamic module lists) ───────────
 
-export interface ModuleDefinition {
-  id: string;
-  name: string;
-  icon: string;
-  fields: string[];
-}
-
-export const MODULE_DEFINITIONS: ModuleDefinition[] = [
-  {
-    id: 'quick_access',
-    name: 'Quick Access',
-    icon: 'flash',
-    fields: ['Item Name', 'Description', 'Price', 'Stock Level'],
-  },
-  {
-    id: 'staffs',
-    name: 'Staffs',
-    icon: 'people',
-    fields: ['Name', 'Email', 'Phone', 'Role', 'Department'],
-  },
-  {
-    id: 'students',
-    name: 'Students',
-    icon: 'school',
-    fields: ['Name', 'Email', 'Class', 'Grade', 'Guardian'],
-  },
-  {
-    id: 'invoices',
-    name: 'Invoices',
-    icon: 'receipt',
-    fields: ['Invoice No', 'Student', 'Amount', 'Due Date', 'Status'],
-  },
-  {
-    id: 'assets',
-    name: 'Assets',
-    icon: 'cube',
-    fields: ['Asset Name', 'Category', 'Condition', 'Location'],
-  },
-  {
-    id: 'settings',
-    name: 'Settings',
-    icon: 'settings',
-    fields: ['General', 'Notifications', 'Security', 'Billing'],
-  },
-];
-
-// Helper: build empty permissions for all modules
-const buildEmptyPermissions = (): RolePermissions => {
+/** Build an empty permissions map from a list of module keys */
+export const buildEmptyPermissions = (moduleKeys: string[]): RolePermissions => {
   const perms: RolePermissions = {};
-  for (const mod of MODULE_DEFINITIONS) {
-    perms[mod.id] = {
-      read: [],
-      update: [],
-      delete: [],
-      add: [],
-      fullAccess: false,
-    };
+  for (const key of moduleKeys) {
+    perms[key] = { read: [], update: [], delete: [], add: [], fullAccess: false };
   }
   return perms;
+};
+
+/** Build empty permissions from ModuleData[] for convenience */
+export const buildEmptyPermissionsFromModules = (mods: ModuleData[]): RolePermissions => {
+  return buildEmptyPermissions(mods.map((m) => m.key));
 };
 
 // Helper: parse permissions JSON safely
 const parsePermissions = (json: string | null): RolePermissions => {
   try {
-    if (!json) return buildEmptyPermissions();
-    const parsed = JSON.parse(json);
-    // Merge with defaults so new modules always appear
-    const defaults = buildEmptyPermissions();
-    return { ...defaults, ...parsed };
+    if (!json) return {};
+    return JSON.parse(json);
   } catch {
-    return buildEmptyPermissions();
+    return {};
   }
 };
 
-// Helper: determine type from permissions
-const computeRoleType = (perms: RolePermissions): 'FULL ACCESS' | 'STANDARD' => {
-  const allFull = MODULE_DEFINITIONS.every((mod) => perms[mod.id]?.fullAccess === true);
+// Helper: determine type from permissions and module keys
+const computeRoleType = (
+  perms: RolePermissions,
+  moduleKeys: string[]
+): 'FULL ACCESS' | 'STANDARD' => {
+  if (moduleKeys.length === 0) return 'STANDARD';
+  const allFull = moduleKeys.every((key) => perms[key]?.fullAccess === true);
   return allFull ? 'FULL ACCESS' : 'STANDARD';
 };
 
@@ -127,7 +82,7 @@ const toRoleData = (row: any): RoleData => {
     id: row.id,
     schoolId: row.schoolId ?? row.school_id,
     name: row.name,
-    type: (row.type as 'FULL ACCESS' | 'STANDARD') ?? computeRoleType(perms),
+    type: (row.type as 'FULL ACCESS' | 'STANDARD') ?? 'STANDARD',
     permissions: perms,
     createdAt: row.createdAt ?? row.created_at,
     updatedAt: row.updatedAt ?? row.updated_at,
@@ -240,7 +195,10 @@ export const createRole = async (
       return { success: false, error: 'A role with this name already exists in this organization' };
     }
 
-    const roleType = computeRoleType(data.permissions);
+    // Fetch module keys to compute role type
+    const modulesResult = await fetchSchoolModules(schoolId);
+    const moduleKeys = (modulesResult.modules ?? []).map((m) => m.key);
+    const roleType = computeRoleType(data.permissions, moduleKeys);
     const now = new Date().toISOString();
 
     const result = await db
@@ -310,7 +268,10 @@ export const updateRole = async (
       return { success: false, error: 'A role with this name already exists in this organization' };
     }
 
-    const roleType = computeRoleType(data.permissions);
+    // Fetch module keys to compute role type
+    const modulesResult = await fetchSchoolModules(schoolId);
+    const moduleKeys = (modulesResult.modules ?? []).map((m) => m.key);
+    const roleType = computeRoleType(data.permissions, moduleKeys);
     const now = new Date().toISOString();
 
     await db

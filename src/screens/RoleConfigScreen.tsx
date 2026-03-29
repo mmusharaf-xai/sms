@@ -22,10 +22,10 @@ import {
   fetchRoleById,
   updateRole,
   deleteRole,
-  MODULE_DEFINITIONS,
   RolePermissions,
   getModulePermissionSummary,
 } from '../services/roleService';
+import { fetchSchoolModules, ModuleData } from '../services/moduleService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RoleConfig'>;
 
@@ -127,6 +127,10 @@ const RoleConfigScreen: React.FC<Props> = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | undefined>();
 
+  // Modules fetched from DB
+  const [schoolModules, setSchoolModules] = useState<ModuleData[]>([]);
+  const [modulesLoading, setModulesLoading] = useState(true);
+
   const loadRole = useCallback(async () => {
     if (!currentUserId) {
       setFetchError('Not authenticated');
@@ -149,9 +153,19 @@ const RoleConfigScreen: React.FC<Props> = ({ route, navigation }) => {
     setLoading(false);
   }, [roleId, schoolId, currentUserId]);
 
+  const loadModules = useCallback(async () => {
+    setModulesLoading(true);
+    const result = await fetchSchoolModules(schoolId);
+    if (result.success && result.modules) {
+      setSchoolModules(result.modules);
+    }
+    setModulesLoading(false);
+  }, [schoolId]);
+
   useEffect(() => {
     loadRole();
-  }, [loadRole]);
+    loadModules();
+  }, [loadRole, loadModules]);
 
   useEffect(() => {
     navigation.setOptions({ gestureEnabled: false });
@@ -297,15 +311,34 @@ const RoleConfigScreen: React.FC<Props> = ({ route, navigation }) => {
           </View>
 
           {/* Module list */}
-          {MODULE_DEFINITIONS.map((mod) => (
-            <ModuleRow
-              key={mod.id}
-              icon={mod.icon}
-              name={mod.name}
-              summary={getModulePermissionSummary(permissions[mod.id])}
-              onPress={() => handleModulePress(mod.id)}
-            />
-          ))}
+          {modulesLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <View key={i} style={[styles.moduleRow, { marginTop: i === 1 ? 0 : 2 }]}>
+                  <View style={styles.moduleIcon}>
+                    <Skeleton width={24} height={24} borderRadius={6} />
+                  </View>
+                  <View style={{ marginLeft: 14, flex: 1 }}>
+                    <Skeleton width={120} height={18} borderRadius={6} />
+                    <View style={{ marginTop: 6 }}>
+                      <Skeleton width={80} height={13} borderRadius={6} />
+                    </View>
+                  </View>
+                  <Skeleton width={20} height={20} borderRadius={10} />
+                </View>
+              ))}
+            </>
+          ) : (
+            schoolModules.map((mod) => (
+              <ModuleRow
+                key={mod.key}
+                icon={mod.icon}
+                name={mod.name}
+                summary={getModulePermissionSummary(permissions[mod.key])}
+                onPress={() => handleModulePress(mod.key)}
+              />
+            ))
+          )}
 
           {/* Delete button */}
           <TouchableOpacity

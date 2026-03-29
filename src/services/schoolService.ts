@@ -1,6 +1,7 @@
 import { getDb } from '../../db/connection';
 import { schools, userSchools, School, UserSchool } from '../../db/schema';
 import { eq, like, and } from 'drizzle-orm';
+import { seedDefaultModules } from './moduleService';
 
 export interface SchoolResult {
   success: boolean;
@@ -113,6 +114,9 @@ export const createSchool = async (
       schoolId: school.id,
       role: 'owner',
     });
+
+    // Seed default modules for the new school
+    await seedDefaultModules(school.id);
 
     return { success: true, school };
   } catch (error) {
@@ -392,6 +396,9 @@ export const registerSchool = async (
       schoolId: school.id,
       role: 'owner',
     });
+
+    // Seed default modules for the new school
+    await seedDefaultModules(school.id);
 
     return { success: true, school };
   } catch (error) {

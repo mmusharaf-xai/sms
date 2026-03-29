@@ -6,3 +6,4 @@ export * from './sidebarService';
 export * from './settingsConfigService';
 export * from './organizationConfigService';
 export * from './roleService';
+export * from './moduleService';
