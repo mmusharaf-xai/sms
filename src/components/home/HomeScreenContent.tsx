@@ -3,21 +3,21 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   FlatList,
   RefreshControl,
   Alert,
   TouchableOpacity,
   TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import CreateSchoolModal from './CreateSchoolModal';
 import JoinSchoolModal from './JoinSchoolModal';
 import { colors } from '../../utils/colors';
-import { getUserSchools, createSchool, joinSchool } from '../../services/schoolService';
+import { getUserSchools, joinSchool } from '../../services/schoolService';
 import { School, UserSchool } from '../../../db/schema';
 import { RootStackParamList } from '../../navigation/AppNavigator';
+import { useAuth } from '../../context/AuthContext';
 
 interface UserSchoolWithSchool extends UserSchool {
   school: School;
@@ -28,18 +28,16 @@ interface HomeScreenContentProps {
 }
 
 const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => {
+  const { currentUserId } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [schools, setSchools] = useState<UserSchoolWithSchool[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<UserSchoolWithSchool[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [createModalVisible, setCreateModalVisible] = useState(false);
   const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // TODO: Get actual user ID from auth context/state
-  const currentUserId = 1;
-
   const fetchSchools = useCallback(async () => {
+    if (!currentUserId) return;
     const result = await getUserSchools(currentUserId);
     if (result.success && result.userSchools) {
       setSchools(result.userSchools as UserSchoolWithSchool[]);
@@ -74,19 +72,8 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
     setRefreshing(false);
   };
 
-  const handleCreateSchool = async (name: string, description: string) => {
-    setActionLoading(true);
-    const result = await createSchool(name, description || null, currentUserId);
-    setActionLoading(false);
-
-    if (result.success) {
-      await fetchSchools();
-    } else {
-      throw new Error(result.error || 'Failed to create school');
-    }
-  };
-
   const handleJoinSchool = async (code: string) => {
+    if (!currentUserId) return;
     setActionLoading(true);
     const result = await joinSchool(code, currentUserId);
     setActionLoading(false);
@@ -107,10 +94,22 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
       .slice(0, 2);
   };
 
+  const getSchoolYear = (createdAt: string | undefined) => {
+    if (!createdAt) return new Date().getFullYear();
+    return new Date(createdAt).getFullYear();
+  };
+
+  const handleSchoolPress = (school: School) => {
+    navigation.navigate('QuickAccess', {
+      schoolId: school.id,
+      schoolName: school.name,
+    });
+  };
+
   const renderSchoolItem = ({ item }: { item: UserSchoolWithSchool }) => (
     <TouchableOpacity
       style={styles.schoolItem}
-      onPress={() => console.log('Selected school:', item.school.id)}
+      onPress={() => handleSchoolPress(item.school)}
       activeOpacity={0.7}
     >
       <View style={styles.schoolAvatar}>
@@ -121,7 +120,7 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
           {item.school.name}
         </Text>
         <Text style={styles.schoolMeta} numberOfLines={1}>
-          {item.role.charAt(0).toUpperCase() + item.role.slice(1)} • Since 2024
+          {item.role.charAt(0).toUpperCase() + item.role.slice(1)} • Since {getSchoolYear(item.school.createdAt)}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
@@ -171,7 +170,7 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
       <View style={styles.actionContainer}>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => setCreateModalVisible(true)}
+          onPress={() => navigation.navigate('RegisterSchool')}
           activeOpacity={0.9}
         >
           <View style={styles.primaryButtonIcon}>
@@ -225,13 +224,6 @@ const HomeScreenContent: React.FC<HomeScreenContentProps> = ({ navigation }) => 
       </View>
 
       {/* Modals */}
-      <CreateSchoolModal
-        visible={createModalVisible}
-        onClose={() => setCreateModalVisible(false)}
-        onCreate={handleCreateSchool}
-        loading={actionLoading}
-      />
-
       <JoinSchoolModal
         visible={joinModalVisible}
         onClose={() => setJoinModalVisible(false)}

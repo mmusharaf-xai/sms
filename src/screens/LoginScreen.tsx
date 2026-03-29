@@ -2,25 +2,31 @@ import React from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LoginScreenHeader, LoginForm } from '../components/login';
 import { FormLink } from '../components/shared';
 import { colors } from '../utils/colors';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { useAuth } from '../context/AuthContext';
+import { User } from '../../db/schema';
 
 type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
+  const { setCurrentUser } = useAuth();
   const onNavigateToSignup = () => navigation.navigate('Signup');
-  const onLoginSuccess = () => navigation.reset({
-    index: 0,
-    routes: [{ name: 'Home' }],
-  });
+  const onLoginSuccess = async (user: User) => {
+    await setCurrentUser(user);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Home' }],
+    });
+  };
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView

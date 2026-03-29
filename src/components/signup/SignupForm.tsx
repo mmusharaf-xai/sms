@@ -3,9 +3,10 @@ import { View, StyleSheet } from 'react-native';
 import { FormInput, PrimaryButton, FormError } from '../shared';
 import { validateSignupForm } from '../../utils/validation';
 import { signupUser } from '../../services/authService';
+import { User } from '../../../db/schema';
 
 interface SignupFormProps {
-  onSignupSuccess: () => void;
+  onSignupSuccess: (user: User) => void;
   onNavigateToLogin: () => void;
 }
 
@@ -34,8 +35,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess, onNavigateToLo
     try {
       const result = await signupUser(fullName, email, password);
 
-      if (result.success) {
-        onSignupSuccess();
+      if (result.success && result.user) {
+        onSignupSuccess(result.user);
       } else if (result.fieldErrors) {
         setErrors(result.fieldErrors);
       } else {

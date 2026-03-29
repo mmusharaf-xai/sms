@@ -8,6 +8,15 @@ export interface SchoolResult {
   error?: string;
 }
 
+export interface RegisterSchoolData {
+  name: string;
+  address: string;
+  ownerName: string;
+  phone: string;
+  email: string;
+  logo?: string | null;
+}
+
 export interface SchoolsResult {
   success: boolean;
   schools?: School[];
@@ -98,10 +107,11 @@ export const createSchool = async (
 
     const school = result[0];
 
-    // Automatically add the creator as an admin
+    // Automatically add the creator as an owner
     await db.insert(userSchools).values({
       userId: userId,
       schoolId: school.id,
+      role: 'owner',
     });
 
     return { success: true, school };
@@ -272,5 +282,120 @@ export const leaveSchool = async (
   } catch (error) {
     console.error('Leave school error:', error);
     return { success: false, error: 'An error occurred while leaving the school' };
+  }
+};
+
+/**
+ * Register a new school with full details
+ * Validates unique name and address
+ */
+export const registerSchool = async (
+  data: RegisterSchoolData,
+  userId: number
+): Promise<SchoolResult> => {
+  try {
+    const db = getDb();
+    const { name, address, ownerName, phone, email, logo } = data;
+
+    // Validate required fields
+    if (!name || name.trim() === '') {
+      return { success: false, error: 'School name is required' };
+    }
+    if (!address || address.trim() === '') {
+      return { success: false, error: 'Address is required' };
+    }
+    if (!ownerName || ownerName.trim() === '') {
+      return { success: false, error: 'Owner name is required' };
+    }
+    if (!phone || phone.trim() === '') {
+      return { success: false, error: 'Phone number is required' };
+    }
+    if (!email || email.trim() === '') {
+      return { success: false, error: 'Email address is required' };
+    }
+
+    const trimmedName = name.trim();
+    const trimmedAddress = address.trim();
+    const trimmedOwnerName = ownerName.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedEmail = email.trim();
+
+    // Check if school name already exists
+    const existingName = await db
+      .select()
+      .from(schools)
+      .where(eq(schools.name, trimmedName))
+      .limit(1);
+
+    if (existingName.length > 0) {
+      return { success: false, error: 'A school with this name already exists' };
+    }
+
+    // Check if address already exists
+    const existingAddress = await db
+      .select()
+      .from(schools)
+      .where(eq(schools.address, trimmedAddress))
+      .limit(1);
+
+    if (existingAddress.length > 0) {
+      return { success: false, error: 'A school with this address already exists' };
+    }
+
+    // Generate a unique code
+    let code = generateSchoolCode();
+    let codeExists = true;
+    let attempts = 0;
+
+    while (codeExists && attempts < 10) {
+      const existingSchools = await db
+        .select()
+        .from(schools)
+        .where(eq(schools.code, code))
+        .limit(1);
+
+      if (existingSchools.length === 0) {
+        codeExists = false;
+      } else {
+        code = generateSchoolCode();
+        attempts++;
+      }
+    }
+
+    if (codeExists) {
+      return { success: false, error: 'Failed to generate unique school code' };
+    }
+
+    // Create the school with full details
+    const schoolData = {
+      name: trimmedName,
+      code,
+      address: trimmedAddress,
+      ownerName: trimmedOwnerName,
+      phone: trimmedPhone,
+      email: trimmedEmail,
+      logo: logo || null,
+      createdBy: userId,
+    };
+
+    const result = await db.insert(schools).values(schoolData as any).returning();
+
+    if (result.length === 0) {
+      return { success: false, error: 'Failed to create school' };
+    }
+
+    const school = result[0];
+
+    // Automatically add the creator as an owner
+    await db.insert(userSchools).values({
+      userId: userId,
+      schoolId: school.id,
+      role: 'owner',
+    });
+
+    return { success: true, school };
+  } catch (error) {
+    console.error('Register school error:', error);
+    return { success: false, error: 'An error occurred while registering the school' };
   }
 };

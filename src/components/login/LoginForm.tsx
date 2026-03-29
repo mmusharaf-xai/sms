@@ -4,9 +4,10 @@ import { FormInput, PrimaryButton, FormError } from '../shared';
 import { colors } from '../../utils/colors';
 import { validateLoginForm } from '../../utils/validation';
 import { loginUser } from '../../services/authService';
+import { User } from '../../../db/schema';
 
 interface LoginFormProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (user: User) => void;
   onNavigateToSignup: () => void;
 }
 
@@ -34,8 +35,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onNavigateToSignu
     try {
       const result = await loginUser(email, password);
 
-      if (result.success) {
-        onLoginSuccess();
+      if (result.success && result.user) {
+        onLoginSuccess(result.user);
       } else {
         setGeneralError(result.error);
       }
