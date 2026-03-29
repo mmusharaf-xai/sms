@@ -5,3 +5,4 @@ export * from './uiConfigService';
 export * from './sidebarService';
 export * from './settingsConfigService';
 export * from './organizationConfigService';
+export * from './roleService';

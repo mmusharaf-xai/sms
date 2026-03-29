@@ -1,5 +1,5 @@
 import { getDb } from '../../db/connection';
-import { schools, userSchools } from '../../db/schema';
+import { schools, userSchools, roles } from '../../db/schema';
 import { eq, and, ne } from 'drizzle-orm';
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -90,15 +90,21 @@ export const fetchOrganizationConfig = async (
       phone: school.phone ?? '',
     };
 
-    // Mock roles – replace with real table query when roles table exists
-    const roles: OrganizationRole[] = [
-      { id: 1, name: 'Administrator', type: 'FULL ACCESS' },
-      { id: 2, name: 'Teacher', type: 'STANDARD' },
-    ];
+    // Fetch roles from the roles table
+    const roleRows = await db
+      .select()
+      .from(roles)
+      .where(eq(roles.schoolId, schoolId));
+
+    const orgRoles: OrganizationRole[] = roleRows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      type: (r.type as 'FULL ACCESS' | 'STANDARD') ?? 'STANDARD',
+    }));
 
     return {
       success: true,
-      data: { details, roles },
+      data: { details, roles: orgRoles },
     };
   } catch (error) {
     console.error('fetchOrganizationConfig error:', error);

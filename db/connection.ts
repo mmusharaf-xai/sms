@@ -23,6 +23,8 @@ export const initDb = async () => {
     
     await database.run('CREATE TABLE IF NOT EXISTS user_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, school_id INTEGER NOT NULL, role TEXT NOT NULL DEFAULT "member", joined_at TEXT NOT NULL, UNIQUE(user_id, school_id))');
 
+    await database.run('CREATE TABLE IF NOT EXISTS roles (id INTEGER PRIMARY KEY AUTOINCREMENT, school_id INTEGER NOT NULL, name TEXT NOT NULL, type TEXT NOT NULL DEFAULT "STANDARD", permissions TEXT DEFAULT "{}", created_at TEXT NOT NULL, updated_at TEXT NOT NULL)');
+
     // Migration: Add new columns if they don't exist
     const migrations = [
       'ALTER TABLE users ADD COLUMN avatar TEXT',

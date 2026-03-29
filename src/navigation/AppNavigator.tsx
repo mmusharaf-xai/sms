@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen, QuickAccessScreen, SchoolSettingsScreen, OrganizationConfigScreen } from '../screens';
+import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen, QuickAccessScreen, SchoolSettingsScreen, OrganizationConfigScreen, CreateNewRoleScreen, RoleConfigScreen } from '../screens';
 import { initDb } from '../../db/connection';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 
@@ -59,6 +59,8 @@ const AppNavigatorContent: React.FC = () => {
         <Stack.Screen name="QuickAccess" component={QuickAccessScreen} />
         <Stack.Screen name="SchoolSettings" component={SchoolSettingsScreen} />
         <Stack.Screen name="OrganizationConfig" component={OrganizationConfigScreen} />
+        <Stack.Screen name="CreateNewRole" component={CreateNewRoleScreen} />
+        <Stack.Screen name="RoleConfig" component={RoleConfigScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

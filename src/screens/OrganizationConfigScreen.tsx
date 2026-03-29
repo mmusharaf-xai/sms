@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../utils/colors';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -152,6 +153,7 @@ const RoleRow: React.FC<{
 const OrganizationConfigScreen: React.FC<Props> = ({ route, navigation }) => {
   const { schoolId, schoolName } = route.params;
   const { currentUserId } = useAuth();
+  const isFocused = useIsFocused();
 
   // Data state
   const [details, setDetails] = useState<OrganizationDetails | null>(null);
@@ -210,6 +212,15 @@ const OrganizationConfigScreen: React.FC<Props> = ({ route, navigation }) => {
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+
+  // Re-fetch when screen regains focus (e.g. returning from CreateNewRole / RoleConfig)
+  const initialFocusRef = useRef(true);
+  useEffect(() => {
+    if (isFocused && !initialFocusRef.current) {
+      loadConfig();
+    }
+    initialFocusRef.current = false;
+  }, [isFocused]);
 
   // Disable swipe back
   useEffect(() => {

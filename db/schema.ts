@@ -42,5 +42,18 @@ export type NewUser = typeof users.$inferInsert;
 export type School = typeof schools.$inferSelect;
 export type NewSchool = typeof schools.$inferInsert;
 
+export const roles = sqliteTable('roles', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  schoolId: integer('school_id').notNull(),
+  name: text('name').notNull(),
+  type: text('type').notNull().$defaultFn(() => 'STANDARD'), // 'FULL ACCESS' | 'STANDARD'
+  permissions: text('permissions').$defaultFn(() => '{}'), // JSON string of permissions
+  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export type UserSchool = typeof userSchools.$inferSelect;
 export type NewUserSchool = typeof userSchools.$inferInsert;
+
+export type Role = typeof roles.$inferSelect;
+export type NewRole = typeof roles.$inferInsert;
