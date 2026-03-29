@@ -1,6 +1,6 @@
 import { getDb } from '../../db/connection';
 import { modules } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -36,42 +36,42 @@ const DEFAULT_MODULES: DefaultModule[] = [
     key: 'quick_access',
     name: 'Quick Access',
     icon: 'flash',
-    fields: ['Item Name', 'Description', 'Price', 'Stock Level'],
+    fields: ['Widgets'],
     displayOrder: 1,
   },
   {
     key: 'staffs',
     name: 'Staffs',
     icon: 'people',
-    fields: ['Name', 'Email', 'Phone', 'Role', 'Department'],
+    fields: ['Name', 'DOB', 'Phone Number', 'Email Address'],
     displayOrder: 2,
   },
   {
     key: 'students',
     name: 'Students',
     icon: 'school',
-    fields: ['Name', 'Email', 'Class', 'Grade', 'Guardian'],
+    fields: ['Name', 'DOB', 'Guardian Name', 'Guardian Email Address', 'Email Address', 'Guardian Phone Number'],
     displayOrder: 3,
   },
   {
     key: 'invoices',
     name: 'Invoices',
     icon: 'receipt',
-    fields: ['Invoice No', 'Student', 'Amount', 'Due Date', 'Status'],
+    fields: ['Invoice Number', 'Date', 'Line Items', 'Billing Address', 'Customer Name', 'Customer Mobile Number', 'Customer Email'],
     displayOrder: 4,
   },
   {
     key: 'assets',
     name: 'Assets',
     icon: 'cube',
-    fields: ['Asset Name', 'Category', 'Condition', 'Location'],
+    fields: ['Asset Name', 'Asset Code', 'Asset Type'],
     displayOrder: 5,
   },
   {
     key: 'settings',
     name: 'Settings',
     icon: 'settings',
-    fields: ['General', 'Notifications', 'Security', 'Billing'],
+    fields: ['Organization', 'Staffs', 'Students', 'Classes', 'Invoices', 'Assets', 'Notification Settings', 'Security & Privacy', 'Language & Region'],
     displayOrder: 6,
   },
 ];
@@ -133,6 +133,37 @@ export const seedDefaultModules = async (schoolId: number): Promise<void> => {
   }
 };
 
+// ── Re-seed / update existing modules with latest field definitions ──
+
+export const reseedModuleFields = async (schoolId: number): Promise<void> => {
+  try {
+    const db = getDb();
+
+    for (const mod of DEFAULT_MODULES) {
+      const existing = await db
+        .select()
+        .from(modules)
+        .where(and(eq(modules.schoolId, schoolId), eq(modules.key, mod.key)))
+        .limit(1);
+
+      if (existing.length > 0) {
+        // Update fields to latest definition
+        await db
+          .update(modules)
+          .set({
+            fields: JSON.stringify(mod.fields),
+            name: mod.name,
+            icon: mod.icon,
+            updatedAt: new Date().toISOString(),
+          } as any)
+          .where(eq(modules.id, existing[0].id));
+      }
+    }
+  } catch (error) {
+    console.error('reseedModuleFields error:', error);
+  }
+};
+
 // ── Fetch all active modules for a school ─────────────────────────────
 
 export const fetchSchoolModules = async (
@@ -143,6 +174,8 @@ export const fetchSchoolModules = async (
 
     // Ensure modules are seeded (lazy seed on first access)
     await seedDefaultModules(schoolId);
+    // Update existing modules with latest field definitions
+    await reseedModuleFields(schoolId);
 
     const rows = await db
       .select()
@@ -158,5 +191,40 @@ export const fetchSchoolModules = async (
   } catch (error) {
     console.error('fetchSchoolModules error:', error);
     return { success: false, error: 'Failed to load modules' };
+  }
+};
+
+// ── Fetch a single module by key for a school ─────────────────────────
+
+export interface SingleModuleResult {
+  success: boolean;
+  module?: ModuleData;
+  error?: string;
+}
+
+export const fetchModuleByKey = async (
+  schoolId: number,
+  moduleKey: string
+): Promise<SingleModuleResult> => {
+  try {
+    const db = getDb();
+
+    await seedDefaultModules(schoolId);
+    await reseedModuleFields(schoolId);
+
+    const rows = await db
+      .select()
+      .from(modules)
+      .where(and(eq(modules.schoolId, schoolId), eq(modules.key, moduleKey)))
+      .limit(1);
+
+    if (rows.length === 0) {
+      return { success: false, error: 'Module not found' };
+    }
+
+    return { success: true, module: toModuleData(rows[0]) };
+  } catch (error) {
+    console.error('fetchModuleByKey error:', error);
+    return { success: false, error: 'Failed to load module' };
   }
 };

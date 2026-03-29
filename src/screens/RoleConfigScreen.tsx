@@ -237,8 +237,35 @@ const RoleConfigScreen: React.FC<Props> = ({ route, navigation }) => {
     );
   };
 
-  const handleModulePress = (_moduleId: string) => {
-    Alert.alert('Coming Soon', 'Module permission configuration will be available soon.');
+  // ── Listen for returned permission data from ModulePermissions ──────
+  useEffect(() => {
+    const updatedModule = route.params?.updatedModule;
+    if (updatedModule) {
+      setPermissions((prev) => ({
+        ...prev,
+        [updatedModule.moduleKey]: updatedModule.permission,
+      }));
+      // Clear the param so it doesn't re-apply on next render
+      navigation.setParams({ updatedModule: undefined } as any);
+    }
+  }, [route.params?.updatedModule]);
+
+  const handleModulePress = (moduleKey: string) => {
+    const currentPerm = permissions[moduleKey] || {
+      read: [],
+      update: [],
+      delete: [],
+      add: [],
+      fullAccess: false,
+    };
+    navigation.navigate('ModulePermissions', {
+      schoolId,
+      schoolName,
+      moduleKey,
+      currentPermission: currentPerm,
+      returnScreen: 'RoleConfig',
+      roleId,
+    });
   };
 
   if (loading) return <RoleConfigSkeleton />;
