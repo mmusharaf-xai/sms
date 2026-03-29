@@ -324,11 +324,11 @@ export const getModulePermissionSummary = (perm: ModulePermission | undefined): 
   if (!perm) return 'No access';
   if (perm.fullAccess) return 'Full Access';
 
-  const parts: string[] = [];
-  if (perm.read.length > 0) parts.push('Read');
-  if (perm.update.length > 0) parts.push('Update');
-  if (perm.add.length > 0) parts.push('Add');
-  if (perm.delete.length > 0) parts.push('Delete');
+  const hasAny =
+    perm.read.length > 0 ||
+    perm.update.length > 0 ||
+    perm.add.length > 0 ||
+    perm.delete.length > 0;
 
-  return parts.length > 0 ? parts.join(', ') : 'No access';
+  return hasAny ? 'Customized' : 'No access';
 };

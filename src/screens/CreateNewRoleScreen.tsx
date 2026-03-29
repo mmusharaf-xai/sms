@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -107,10 +107,15 @@ const CreateNewRoleScreen: React.FC<Props> = ({ route, navigation }) => {
   const [permissions, setPermissions] = useState<RolePermissions>({});
   const [saving, setSaving] = useState(false);
 
-  // Module state – fetched from DB
+  // Module state - fetched from DB
   const [schoolModules, setSchoolModules] = useState<ModuleData[]>([]);
   const [modulesLoading, setModulesLoading] = useState(true);
   const [modulesError, setModulesError] = useState<string | undefined>();
+
+  // Ref keeps the latest updatedModule param so the async loadModules
+  // callback can read it even after remount (survives the closure).
+  const updatedModuleRef = useRef(route.params?.updatedModule);
+  updatedModuleRef.current = route.params?.updatedModule;
 
   // ── Fetch modules from DB ───────────────────────────────────────────
 
@@ -122,8 +127,18 @@ const CreateNewRoleScreen: React.FC<Props> = ({ route, navigation }) => {
 
     if (result.success && result.modules) {
       setSchoolModules(result.modules);
-      // Build empty permissions for each module
-      setPermissions(buildEmptyPermissionsFromModules(result.modules));
+
+      // Build empty permissions, then apply any pending update that was
+      // passed back from the ModulePermissions screen via route params.
+      const basePerms = buildEmptyPermissionsFromModules(result.modules);
+      const pending = updatedModuleRef.current;
+      if (pending) {
+        basePerms[pending.moduleKey] = pending.permission;
+        // Clear so it is not re-applied on retry / next load
+        updatedModuleRef.current = undefined;
+        navigation.setParams({ updatedModule: undefined } as any);
+      }
+      setPermissions(basePerms);
     } else {
       setModulesError(result.error || 'Failed to load modules');
     }
@@ -184,17 +199,20 @@ const CreateNewRoleScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   // ── Listen for returned permission data from ModulePermissions ──────
+  // This effect handles the case where the screen was NOT remounted
+  // (i.e. modules already loaded, just params updated).
+  // The remount case is handled inside loadModules via the ref.
   useEffect(() => {
     const updatedModule = route.params?.updatedModule;
-    if (updatedModule) {
+    if (updatedModule && !modulesLoading) {
       setPermissions((prev) => ({
         ...prev,
         [updatedModule.moduleKey]: updatedModule.permission,
       }));
-      // Clear the param so it doesn't re-apply on next render
+      updatedModuleRef.current = undefined;
       navigation.setParams({ updatedModule: undefined } as any);
     }
-  }, [route.params?.updatedModule]);
+  }, [route.params?.updatedModule, modulesLoading]);
 
   const handleModulePress = (moduleKey: string) => {
     const currentPerm = permissions[moduleKey] || {

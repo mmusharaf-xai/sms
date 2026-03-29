@@ -131,6 +131,11 @@ const RoleConfigScreen: React.FC<Props> = ({ route, navigation }) => {
   const [schoolModules, setSchoolModules] = useState<ModuleData[]>([]);
   const [modulesLoading, setModulesLoading] = useState(true);
 
+  // Ref keeps the latest updatedModule param so the async loadRole
+  // callback can read it even after remount (survives the closure).
+  const updatedModuleRef = useRef(route.params?.updatedModule);
+  updatedModuleRef.current = route.params?.updatedModule;
+
   const loadRole = useCallback(async () => {
     if (!currentUserId) {
       setFetchError('Not authenticated');
@@ -145,7 +150,17 @@ const RoleConfigScreen: React.FC<Props> = ({ route, navigation }) => {
 
     if (result.success && result.role) {
       setRoleName(result.role.name);
-      setPermissions(result.role.permissions);
+
+      // Start from DB permissions, then apply any pending update that was
+      // passed back from the ModulePermissions screen via route params.
+      const perms = { ...result.role.permissions };
+      const pending = updatedModuleRef.current;
+      if (pending) {
+        perms[pending.moduleKey] = pending.permission;
+        updatedModuleRef.current = undefined;
+        navigation.setParams({ updatedModule: undefined } as any);
+      }
+      setPermissions(perms);
     } else {
       setFetchError(result.error || 'Failed to load role');
     }
@@ -238,17 +253,20 @@ const RoleConfigScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   // ── Listen for returned permission data from ModulePermissions ──────
+  // This effect handles the case where the screen was NOT remounted
+  // (i.e. role already loaded, just params updated).
+  // The remount case is handled inside loadRole via the ref.
   useEffect(() => {
     const updatedModule = route.params?.updatedModule;
-    if (updatedModule) {
+    if (updatedModule && !loading) {
       setPermissions((prev) => ({
         ...prev,
         [updatedModule.moduleKey]: updatedModule.permission,
       }));
-      // Clear the param so it doesn't re-apply on next render
+      updatedModuleRef.current = undefined;
       navigation.setParams({ updatedModule: undefined } as any);
     }
-  }, [route.params?.updatedModule]);
+  }, [route.params?.updatedModule, loading]);
 
   const handleModulePress = (moduleKey: string) => {
     const currentPerm = permissions[moduleKey] || {
