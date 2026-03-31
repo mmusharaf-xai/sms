@@ -7,3 +7,4 @@ export * from './settingsConfigService';
 export * from './organizationConfigService';
 export * from './roleService';
 export * from './moduleService';
+export * from './fieldGroupService';

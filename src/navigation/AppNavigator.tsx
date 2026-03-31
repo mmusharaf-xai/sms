@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen, QuickAccessScreen, SchoolSettingsScreen, OrganizationConfigScreen, CreateNewRoleScreen, RoleConfigScreen, ModulePermissionsScreen } from '../screens';
+import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen, QuickAccessScreen, SchoolSettingsScreen, OrganizationConfigScreen, CreateNewRoleScreen, RoleConfigScreen, ModulePermissionsScreen, ModuleFieldConfigScreen, GroupFieldListScreen, AddCustomFieldScreen } from '../screens';
 import { initDb } from '../../db/connection';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 
@@ -28,6 +28,30 @@ export type RootStackParamList = {
     currentPermission: import('../services/roleService').ModulePermission;
     returnScreen: 'CreateNewRole' | 'RoleConfig';
     roleId?: number;
+  };
+  ModuleFieldConfig: {
+    schoolId: number;
+    schoolName: string;
+    moduleKey: string;
+    moduleName: string;
+  };
+  GroupFieldList: {
+    schoolId: number;
+    schoolName: string;
+    moduleKey: string;
+    moduleName: string;
+    groupId: number;
+    groupName: string;
+    isDefault: boolean;
+  };
+  AddCustomField: {
+    schoolId: number;
+    schoolName: string;
+    moduleKey: string;
+    moduleName: string;
+    groupId: number;
+    groupName: string;
+    fieldId?: number;
   };
 };
 
@@ -75,6 +99,9 @@ const AppNavigatorContent: React.FC = () => {
         <Stack.Screen name="CreateNewRole" component={CreateNewRoleScreen} />
         <Stack.Screen name="RoleConfig" component={RoleConfigScreen} />
         <Stack.Screen name="ModulePermissions" component={ModulePermissionsScreen} />
+        <Stack.Screen name="ModuleFieldConfig" component={ModuleFieldConfigScreen} />
+        <Stack.Screen name="GroupFieldList" component={GroupFieldListScreen} />
+        <Stack.Screen name="AddCustomField" component={AddCustomFieldScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
