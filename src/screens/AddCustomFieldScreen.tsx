@@ -37,7 +37,12 @@ const FIELD_TYPE_OPTIONS = [
 const DATE_FORMAT_OPTIONS = [
   { label: 'DD/MM/YYYY', value: 'DD/MM/YYYY' },
   { label: 'MM/DD/YYYY', value: 'MM/DD/YYYY' },
-  { label: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
+  { label: 'YYYY/MM/DD', value: 'YYYY/MM/DD' },
+];
+
+const TIME_FORMAT_OPTIONS = [
+  { label: '12 Hour (hh:mm AM/PM)', value: '12h' },
+  { label: '24 Hour (HH:mm)', value: '24h' },
 ];
 
 // ── Select option type ─────────────────────────────────────────────────
@@ -73,8 +78,10 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
   const [numberErrorMessage, setNumberErrorMessage] = useState('');
   const [restrictDecimals, setRestrictDecimals] = useState(false);
 
-  // Date constraints
+  // Date settings
   const [dateFormat, setDateFormat] = useState('DD/MM/YYYY');
+  const [showTime, setShowTime] = useState(false);
+  const [timeFormat, setTimeFormat] = useState('12h');
 
   // Select constraints
   const [selectionMode, setSelectionMode] = useState<'single' | 'multi'>('single');
@@ -118,6 +125,8 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
         setRestrictDecimals(!!cfg.restrictDecimals);
       } else if (f.fieldType === 'Date') {
         setDateFormat(cfg.dateFormat ?? 'DD/MM/YYYY');
+        setShowTime(!!cfg.showTime);
+        setTimeFormat(cfg.timeFormat ?? '12h');
       } else if (f.fieldType === 'Select') {
         setSelectionMode(cfg.selectionMode ?? 'single');
         if (Array.isArray(cfg.options) && cfg.options.length > 0) {
@@ -153,7 +162,11 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
           restrictDecimals,
         };
       case 'Date':
-        return { dateFormat };
+        return {
+          dateFormat,
+          showTime,
+          timeFormat: showTime ? timeFormat : undefined,
+        };
       case 'Select':
         return {
           selectionMode,
@@ -164,14 +177,77 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
+  // ── Validation helpers ─────────────────────────────────────────────
+
+  const isValidRegex = (pattern: string): boolean => {
+    try {
+      new RegExp(pattern);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const isValidNonNegativeInt = (value: string): boolean => {
+    if (!value.trim()) return true;
+    const n = Number(value);
+    return Number.isInteger(n) && n >= 0;
+  };
+
+  const isValidNumeric = (value: string): boolean => {
+    if (!value.trim()) return true;
+    return !isNaN(Number(value));
+  };
+
   // ── Save handler ───────────────────────────────────────────────────
 
   const handleSave = async () => {
-    // Validate
     const newErrors: Record<string, string> = {};
     if (!fieldName.trim()) {
       newErrors.fieldName = 'Field name is required';
     }
+
+    // Text-specific validation
+    if (fieldType === 'Text') {
+      if (minChars && !isValidNonNegativeInt(minChars)) {
+        newErrors.minChars = 'Must be a non-negative whole number';
+      }
+      if (maxChars && !isValidNonNegativeInt(maxChars)) {
+        newErrors.maxChars = 'Must be a non-negative whole number';
+      }
+      if (
+        minChars && maxChars &&
+        isValidNonNegativeInt(minChars) && isValidNonNegativeInt(maxChars) &&
+        Number(minChars) > Number(maxChars)
+      ) {
+        newErrors.minChars = 'Min cannot be greater than Max';
+      }
+      if (textRegex && !isValidRegex(textRegex)) {
+        newErrors.textRegex = 'Invalid regex pattern';
+      }
+    }
+
+    // Number-specific validation
+    if (fieldType === 'Number') {
+      if (minValue && !isValidNumeric(minValue)) {
+        newErrors.minValue = 'Must be a valid number';
+      }
+      if (maxValue && !isValidNumeric(maxValue)) {
+        newErrors.maxValue = 'Must be a valid number';
+      }
+      if (
+        minValue && maxValue &&
+        isValidNumeric(minValue) && isValidNumeric(maxValue) &&
+        Number(minValue) > Number(maxValue)
+      ) {
+        newErrors.minValue = 'Min cannot be greater than Max';
+      }
+      if (numberRegex && !isValidRegex(numberRegex)) {
+        newErrors.numberRegex = 'Invalid regex pattern';
+      }
+    }
+
+    // Select-specific validation
     if (fieldType === 'Select') {
       const validOptions = selectOptions.filter((o) => o.label.trim());
       if (validOptions.length < 1) {
@@ -339,20 +415,47 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
               />
             )}
 
-            {/* Date-specific: Date Format */}
+            {/* Date-specific settings */}
             {fieldType === 'Date' && (
-              <FormDropdown
-                label="Date Format"
-                value={dateFormat}
-                options={DATE_FORMAT_OPTIONS}
-                onChange={setDateFormat}
-                containerStyle={styles.fieldGap}
-              />
+              <>
+                <FormDropdown
+                  label="Date Format"
+                  value={dateFormat}
+                  options={DATE_FORMAT_OPTIONS}
+                  onChange={setDateFormat}
+                  containerStyle={styles.fieldGap}
+                />
+                <View style={[styles.fieldGap, styles.showTimeRow]}>
+                  <View style={styles.toggleRowContent}>
+                    <Text style={styles.toggleRowTitle}>Show Time</Text>
+                    <Text style={styles.toggleRowSubtitle}>
+                      Include time selection with date
+                    </Text>
+                  </View>
+                  <FormToggle
+                    label=""
+                    value={showTime}
+                    onChange={setShowTime}
+                    containerStyle={styles.toggleContainer}
+                  />
+                </View>
+                {showTime && (
+                  <FormDropdown
+                    label="Time Format"
+                    value={timeFormat}
+                    options={TIME_FORMAT_OPTIONS}
+                    onChange={setTimeFormat}
+                    containerStyle={styles.fieldGap}
+                  />
+                )}
+              </>
             )}
           </View>
 
-          {/* ── CONSTRAINTS ─────────────────────────────────────────── */}
-          <Text style={styles.sectionLabel}>CONSTRAINTS</Text>
+          {/* ── CONSTRAINTS (hidden for Date) ─────────────────────── */}
+          {fieldType !== 'Date' && (
+            <Text style={styles.sectionLabel}>CONSTRAINTS</Text>
+          )}
 
           {/* Number Constraints */}
           {fieldType === 'Number' && (
@@ -360,25 +463,37 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
               <FormInput
                 label="Minimum Value"
                 value={minValue}
-                onChangeText={setMinValue}
+                onChangeText={(v) => {
+                  setMinValue(v);
+                  if (errors.minValue) setErrors((p) => ({ ...p, minValue: '' }));
+                }}
                 placeholder="0"
                 keyboardType="numeric"
+                error={errors.minValue}
                 containerStyle={styles.fieldGap}
               />
               <FormInput
                 label="Maximum Value"
                 value={maxValue}
-                onChangeText={setMaxValue}
+                onChangeText={(v) => {
+                  setMaxValue(v);
+                  if (errors.maxValue) setErrors((p) => ({ ...p, maxValue: '' }));
+                }}
                 placeholder="999"
                 keyboardType="numeric"
+                error={errors.maxValue}
                 containerStyle={styles.fieldGap}
               />
               <FormInput
                 label="Regex Validation"
                 value={numberRegex}
-                onChangeText={setNumberRegex}
+                onChangeText={(v) => {
+                  setNumberRegex(v);
+                  if (errors.numberRegex) setErrors((p) => ({ ...p, numberRegex: '' }));
+                }}
                 placeholder="^[0-9]*$"
                 autoCapitalize="none"
+                error={errors.numberRegex}
                 containerStyle={styles.fieldGap}
               />
               <FormInput
@@ -387,37 +502,6 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
                 onChangeText={setNumberErrorMessage}
                 placeholder="Please enter a valid number"
               />
-            </View>
-          )}
-
-          {/* Date Constraints */}
-          {fieldType === 'Date' && (
-            <View style={styles.sectionCard}>
-              <View style={styles.dateConstraintRow}>
-                <View style={styles.dateConstraintIcon}>
-                  <Ionicons name="calendar-outline" size={22} color={colors.schoolBlue} />
-                </View>
-                <View style={styles.dateConstraintContent}>
-                  <Text style={styles.dateConstraintTitle}>Min Date</Text>
-                  <Text style={styles.dateConstraintSubtitle}>Earliest selectable date</Text>
-                </View>
-                <TouchableOpacity style={styles.selectButton}>
-                  <Text style={styles.selectButtonText}>Select</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.dateConstraintRow}>
-                <View style={styles.dateConstraintIcon}>
-                  <Ionicons name="calendar-outline" size={22} color={colors.schoolBlue} />
-                </View>
-                <View style={styles.dateConstraintContent}>
-                  <Text style={styles.dateConstraintTitle}>Max Date</Text>
-                  <Text style={styles.dateConstraintSubtitle}>Latest selectable date</Text>
-                </View>
-                <TouchableOpacity style={styles.selectButton}>
-                  <Text style={styles.selectButtonText}>Select</Text>
-                </TouchableOpacity>
-              </View>
             </View>
           )}
 
@@ -509,25 +593,37 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
               <FormInput
                 label="Minimum Characters"
                 value={minChars}
-                onChangeText={setMinChars}
+                onChangeText={(v) => {
+                  setMinChars(v);
+                  if (errors.minChars) setErrors((p) => ({ ...p, minChars: '' }));
+                }}
                 placeholder="0"
                 keyboardType="numeric"
+                error={errors.minChars}
                 containerStyle={styles.fieldGap}
               />
               <FormInput
                 label="Maximum Characters"
                 value={maxChars}
-                onChangeText={setMaxChars}
+                onChangeText={(v) => {
+                  setMaxChars(v);
+                  if (errors.maxChars) setErrors((p) => ({ ...p, maxChars: '' }));
+                }}
                 placeholder="255"
                 keyboardType="numeric"
+                error={errors.maxChars}
                 containerStyle={styles.fieldGap}
               />
               <FormInput
                 label="Regex Validation"
                 value={textRegex}
-                onChangeText={setTextRegex}
+                onChangeText={(v) => {
+                  setTextRegex(v);
+                  if (errors.textRegex) setErrors((p) => ({ ...p, textRegex: '' }));
+                }}
                 placeholder="^[a-zA-Z ]*$"
                 autoCapitalize="none"
+                error={errors.textRegex}
                 containerStyle={styles.fieldGap}
               />
               <FormInput
@@ -691,48 +787,12 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
-  // Date constraints
-  dateConstraintRow: {
+  // Show Time row inside Field Config card
+  showTimeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 0.5,
-    borderBottomColor: colors.border,
-  },
-  dateConstraintIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateConstraintContent: {
-    flex: 1,
-    marginLeft: 14,
-  },
-  dateConstraintTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  dateConstraintSubtitle: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  selectButton: {
-    backgroundColor: colors.background,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  selectButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textSecondary,
+    justifyContent: 'space-between',
+    paddingTop: 8,
   },
 
   // Select constraints
