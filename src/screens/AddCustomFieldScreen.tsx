@@ -21,7 +21,6 @@ import {
   createField,
   updateField,
   fetchFieldById,
-  FieldConfigData,
 } from '../services/fieldGroupService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddCustomField'>;
@@ -61,11 +60,18 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
   const [fieldType, setFieldType] = useState('Text');
   const [isRequired, setIsRequired] = useState(false);
 
+  // Text constraints
+  const [minChars, setMinChars] = useState('');
+  const [maxChars, setMaxChars] = useState('');
+  const [textRegex, setTextRegex] = useState('');
+  const [textErrorMessage, setTextErrorMessage] = useState('');
+
   // Number constraints
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
-  const [regex, setRegex] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [numberRegex, setNumberRegex] = useState('');
+  const [numberErrorMessage, setNumberErrorMessage] = useState('');
+  const [restrictDecimals, setRestrictDecimals] = useState(false);
 
   // Date constraints
   const [dateFormat, setDateFormat] = useState('DD/MM/YYYY');
@@ -99,11 +105,17 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
 
       // Load type-specific config
       const cfg = f.config || {};
-      if (f.fieldType === 'Number') {
+      if (f.fieldType === 'Text') {
+        setMinChars(cfg.minChars?.toString() ?? '');
+        setMaxChars(cfg.maxChars?.toString() ?? '');
+        setTextRegex(cfg.regex ?? '');
+        setTextErrorMessage(cfg.errorMessage ?? '');
+      } else if (f.fieldType === 'Number') {
         setMinValue(cfg.minValue?.toString() ?? '');
         setMaxValue(cfg.maxValue?.toString() ?? '');
-        setRegex(cfg.regex ?? '');
-        setErrorMessage(cfg.errorMessage ?? '');
+        setNumberRegex(cfg.regex ?? '');
+        setNumberErrorMessage(cfg.errorMessage ?? '');
+        setRestrictDecimals(!!cfg.restrictDecimals);
       } else if (f.fieldType === 'Date') {
         setDateFormat(cfg.dateFormat ?? 'DD/MM/YYYY');
       } else if (f.fieldType === 'Select') {
@@ -125,17 +137,23 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const buildConfig = (): Record<string, any> => {
     switch (fieldType) {
+      case 'Text':
+        return {
+          minChars: minChars ? Number(minChars) : undefined,
+          maxChars: maxChars ? Number(maxChars) : undefined,
+          regex: textRegex || undefined,
+          errorMessage: textErrorMessage || undefined,
+        };
       case 'Number':
         return {
           minValue: minValue ? Number(minValue) : undefined,
           maxValue: maxValue ? Number(maxValue) : undefined,
-          regex: regex || undefined,
-          errorMessage: errorMessage || undefined,
+          regex: numberRegex || undefined,
+          errorMessage: numberErrorMessage || undefined,
+          restrictDecimals,
         };
       case 'Date':
-        return {
-          dateFormat,
-        };
+        return { dateFormat };
       case 'Select':
         return {
           selectionMode,
@@ -175,7 +193,6 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
     if (isEditing && fieldId) {
       result = await updateField(fieldId, {
         name: fieldName.trim(),
-        fieldType,
         description,
         config,
         isRequired,
@@ -301,13 +318,26 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
               />
             </View>
 
-            <FormDropdown
-              label="Field Type"
-              value={fieldType}
-              options={FIELD_TYPE_OPTIONS}
-              onChange={setFieldType}
-              containerStyle={styles.fieldGap}
-            />
+            {isEditing ? (
+              <View style={styles.fieldGap}>
+                <Text style={styles.inputLabel}>Field Type</Text>
+                <View style={styles.lockedDropdown}>
+                  <Text style={styles.lockedDropdownText}>{fieldType}</Text>
+                  <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
+                </View>
+                <Text style={styles.lockedHint}>
+                  Field type cannot be changed after creation
+                </Text>
+              </View>
+            ) : (
+              <FormDropdown
+                label="Field Type"
+                value={fieldType}
+                options={FIELD_TYPE_OPTIONS}
+                onChange={setFieldType}
+                containerStyle={styles.fieldGap}
+              />
+            )}
 
             {/* Date-specific: Date Format */}
             {fieldType === 'Date' && (
@@ -345,18 +375,17 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
               />
               <FormInput
                 label="Regex Validation"
-                value={regex}
-                onChangeText={setRegex}
+                value={numberRegex}
+                onChangeText={setNumberRegex}
                 placeholder="^[0-9]*$"
                 autoCapitalize="none"
                 containerStyle={styles.fieldGap}
               />
               <FormInput
                 label="Error Message"
-                value={errorMessage}
-                onChangeText={setErrorMessage}
+                value={numberErrorMessage}
+                onChangeText={setNumberErrorMessage}
                 placeholder="Please enter a valid number"
-                containerStyle={styles.fieldGap}
               />
             </View>
           )}
@@ -477,19 +506,62 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
           {/* Text Constraints (empty — placeholder for future) */}
           {fieldType === 'Text' && (
             <View style={styles.sectionCard}>
-              <Text style={styles.placeholderText}>
-                No additional constraints for text fields.
-              </Text>
+              <FormInput
+                label="Minimum Characters"
+                value={minChars}
+                onChangeText={setMinChars}
+                placeholder="0"
+                keyboardType="numeric"
+                containerStyle={styles.fieldGap}
+              />
+              <FormInput
+                label="Maximum Characters"
+                value={maxChars}
+                onChangeText={setMaxChars}
+                placeholder="255"
+                keyboardType="numeric"
+                containerStyle={styles.fieldGap}
+              />
+              <FormInput
+                label="Regex Validation"
+                value={textRegex}
+                onChangeText={setTextRegex}
+                placeholder="^[a-zA-Z ]*$"
+                autoCapitalize="none"
+                containerStyle={styles.fieldGap}
+              />
+              <FormInput
+                label="Error Message"
+                value={textErrorMessage}
+                onChangeText={setTextErrorMessage}
+                placeholder="Please enter valid text"
+              />
             </View>
           )}
 
           {/* ── ADVANCED SETTINGS ───────────────────────────────────── */}
           <Text style={styles.sectionLabel}>ADVANCED SETTINGS</Text>
           <View style={styles.sectionCard}>
-            <View style={styles.requiredRow}>
-              <View style={styles.requiredContent}>
-                <Text style={styles.requiredTitle}>Mark as Required</Text>
-                <Text style={styles.requiredSubtitle}>
+            {fieldType === 'Number' && (
+              <View style={[styles.toggleRow, styles.toggleRowBorder]}>
+                <View style={styles.toggleRowContent}>
+                  <Text style={styles.toggleRowTitle}>Restrict Decimals</Text>
+                  <Text style={styles.toggleRowSubtitle}>
+                    Only allow whole numbers
+                  </Text>
+                </View>
+                <FormToggle
+                  label=""
+                  value={restrictDecimals}
+                  onChange={setRestrictDecimals}
+                  containerStyle={styles.toggleContainer}
+                />
+              </View>
+            )}
+            <View style={styles.toggleRow}>
+              <View style={styles.toggleRowContent}>
+                <Text style={styles.toggleRowTitle}>Mark as Required</Text>
+                <Text style={styles.toggleRowSubtitle}>
                   Users must fill this field to save
                 </Text>
               </View>
@@ -522,9 +594,7 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
             {saving ? (
               <ActivityIndicator size="small" color={colors.white} />
             ) : (
-              <Text style={styles.saveButtonText}>
-                {isEditing ? 'Save' : 'Save'}
-              </Text>
+              <Text style={styles.saveButtonText}>Save</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -732,27 +802,52 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 4,
   },
-  placeholderText: {
-    fontSize: 14,
+  // Locked field type (edit mode)
+  lockedDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  lockedDropdownText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  lockedHint: {
+    fontSize: 11,
     color: colors.textMuted,
+    marginTop: 4,
+    marginLeft: 4,
     fontStyle: 'italic',
   },
 
-  // Advanced settings
-  requiredRow: {
+  // Advanced settings toggle rows
+  toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  requiredContent: {
+  toggleRowBorder: {
+    borderBottomWidth: 0.5,
+    borderBottomColor: colors.border,
+    marginBottom: 8,
+    paddingBottom: 16,
+  },
+  toggleRowContent: {
     flex: 1,
   },
-  requiredTitle: {
+  toggleRowTitle: {
     fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
   },
-  requiredSubtitle: {
+  toggleRowSubtitle: {
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,

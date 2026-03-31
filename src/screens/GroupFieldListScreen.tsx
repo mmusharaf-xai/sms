@@ -104,8 +104,9 @@ const FieldCard: React.FC<{
   field: FieldConfigData;
   onEdit: () => void;
   onDelete: () => void;
-}> = ({ field, onEdit, onDelete }) => (
-  <View style={styles.fieldCard}>
+  isLast?: boolean;
+}> = ({ field, onEdit, onDelete, isLast }) => (
+  <View style={[styles.fieldCard, isLast && styles.fieldCardLast]}>
     <View style={styles.fieldIconContainer}>
       <Ionicons
         name={getFieldTypeIcon(field.fieldType) as any}
@@ -305,12 +306,13 @@ const GroupFieldListScreen: React.FC<Props> = ({ route, navigation }) => {
             <Text style={styles.sectionTitle}>
               {isDefault ? 'DEFAULT FIELDS' : 'FIELDS'}
             </Text>
-            {filteredFields.map((field) => (
+            {filteredFields.map((field, idx) => (
               <FieldCard
                 key={field.id}
                 field={field}
                 onEdit={() => handleEditField(field)}
                 onDelete={() => handleDeleteField(field)}
+                isLast={idx === filteredFields.length - 1}
               />
             ))}
           </View>
@@ -471,6 +473,9 @@ const styles = StyleSheet.create({
   fieldCardSubtitle: {
     fontSize: 13,
     color: colors.textSecondary,
+  },
+  fieldCardLast: {
+    borderBottomWidth: 0,
   },
   fieldActionButton: {
     padding: 8,

@@ -89,8 +89,9 @@ const GroupCard: React.FC<{
   group: FieldGroupData;
   onPress: () => void;
   onDelete?: () => void;
-}> = ({ group, onPress, onDelete }) => (
-  <TouchableOpacity style={styles.groupCard} onPress={onPress} activeOpacity={0.7}>
+  isLast?: boolean;
+}> = ({ group, onPress, onDelete, isLast }) => (
+  <TouchableOpacity style={[styles.groupCard, isLast && styles.groupCardLast]} onPress={onPress} activeOpacity={0.7}>
     <View style={styles.groupIconContainer}>
       <Ionicons
         name={(group.icon || 'folder-open') as any}
@@ -303,11 +304,12 @@ const ModuleFieldConfigScreen: React.FC<Props> = ({ route, navigation }) => {
             {filteredDefault.length > 0 && (
               <View style={styles.sectionContainer}>
                 <Text style={styles.sectionTitle}>DEFAULT GROUP</Text>
-                {filteredDefault.map((group) => (
+                {filteredDefault.map((group, idx) => (
                   <GroupCard
                     key={group.id}
                     group={group}
                     onPress={() => handleGroupPress(group)}
+                    isLast={idx === filteredDefault.length - 1 && filteredCreated.length === 0}
                   />
                 ))}
               </View>
@@ -317,12 +319,13 @@ const ModuleFieldConfigScreen: React.FC<Props> = ({ route, navigation }) => {
             {filteredCreated.length > 0 && (
               <View style={styles.sectionContainer}>
                 <Text style={styles.sectionTitle}>CREATED GROUPS</Text>
-                {filteredCreated.map((group) => (
+                {filteredCreated.map((group, idx) => (
                   <GroupCard
                     key={group.id}
                     group={group}
                     onPress={() => handleGroupPress(group)}
                     onDelete={() => handleDeleteGroup(group)}
+                    isLast={idx === filteredCreated.length - 1}
                   />
                 ))}
               </View>
@@ -484,6 +487,9 @@ const styles = StyleSheet.create({
   groupCardSubtitle: {
     fontSize: 13,
     color: colors.textSecondary,
+  },
+  groupCardLast: {
+    borderBottomWidth: 0,
   },
   deleteButton: {
     padding: 8,
