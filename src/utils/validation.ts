@@ -180,3 +180,63 @@ export const validateSchoolRegistrationForm = (
 
   return errors;
 };
+
+// ── Organisation Config Form Validation ────────────────────────────────
+
+export const validateOrganizationName = (name: string): ValidationResult => {
+  if (!name || name.trim() === '') {
+    return { isValid: false, error: 'Organization name is required' };
+  }
+  if (name.trim().length < 3) {
+    return { isValid: false, error: 'Organization name must be at least 3 characters' };
+  }
+  if (name.trim().length > 100) {
+    return { isValid: false, error: 'Organization name must be at most 100 characters' };
+  }
+  return { isValid: true };
+};
+
+export const validateOrganizationAddress = (address: string): ValidationResult => {
+  if (!address || address.trim() === '') {
+    return { isValid: false, error: 'Address is required' };
+  }
+  if (address.trim().length < 10) {
+    return { isValid: false, error: 'Please enter a complete address (at least 10 characters)' };
+  }
+  return { isValid: true };
+};
+
+export interface OrganizationFormData {
+  name: string;
+  email: string;
+  address: string;
+  phone: string;
+}
+
+export const validateOrganizationForm = (
+  data: OrganizationFormData
+): Record<string, string | undefined> => {
+  const errors: Record<string, string | undefined> = {};
+
+  const nameResult = validateOrganizationName(data.name);
+  if (!nameResult.isValid) {
+    errors.name = nameResult.error;
+  }
+
+  const emailResult = validateEmail(data.email);
+  if (!emailResult.isValid) {
+    errors.email = emailResult.error;
+  }
+
+  const addressResult = validateOrganizationAddress(data.address);
+  if (!addressResult.isValid) {
+    errors.address = addressResult.error;
+  }
+
+  const phoneResult = validatePhoneNumber(data.phone);
+  if (!phoneResult.isValid) {
+    errors.phone = phoneResult.error;
+  }
+
+  return errors;
+};

@@ -267,8 +267,11 @@ const SchoolSettingsScreen: React.FC<SchoolSettingsScreenProps> = ({ route, navi
   };
 
   const handleItemPress = (item: SettingsSection) => {
+    if (item.route === 'OrganizationSettings') {
+      navigation.navigate('OrganizationConfig', { schoolId, schoolName });
+      return;
+    }
     console.log('Navigate to settings:', item.route);
-    // TODO: Navigate to specific settings page when implemented
   };
 
   // Filter groups based on search

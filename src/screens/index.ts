@@ -5,3 +5,7 @@ export { default as AccountSettingsScreen } from './AccountSettingsScreen';
 export { default as RegisterSchoolScreen } from './RegisterSchoolScreen';
 export { default as QuickAccessScreen } from './QuickAccessScreen';
 export { default as SchoolSettingsScreen } from './SchoolSettingsScreen';
+export { default as OrganizationConfigScreen } from './OrganizationConfigScreen';
+export { default as CreateNewRoleScreen } from './CreateNewRoleScreen';
+export { default as RoleConfigScreen } from './RoleConfigScreen';
+export { default as ModulePermissionsScreen } from './ModulePermissionsScreen';

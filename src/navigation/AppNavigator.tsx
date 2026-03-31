@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen, QuickAccessScreen, SchoolSettingsScreen } from '../screens';
+import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen, QuickAccessScreen, SchoolSettingsScreen, OrganizationConfigScreen, CreateNewRoleScreen, RoleConfigScreen, ModulePermissionsScreen } from '../screens';
 import { initDb } from '../../db/connection';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+
+export type ModulePermissionUpdate = {
+  moduleKey: string;
+  permission: import('../services/roleService').ModulePermission;
+};
 
 export type RootStackParamList = {
   Login: undefined;
@@ -13,6 +18,17 @@ export type RootStackParamList = {
   RegisterSchool: undefined;
   QuickAccess: { schoolId: number; schoolName: string };
   SchoolSettings: { schoolId: number; schoolName: string };
+  OrganizationConfig: { schoolId: number; schoolName: string };
+  CreateNewRole: { schoolId: number; schoolName: string; updatedModule?: ModulePermissionUpdate };
+  RoleConfig: { schoolId: number; schoolName: string; roleId: number; updatedModule?: ModulePermissionUpdate };
+  ModulePermissions: {
+    schoolId: number;
+    schoolName: string;
+    moduleKey: string;
+    currentPermission: import('../services/roleService').ModulePermission;
+    returnScreen: 'CreateNewRole' | 'RoleConfig';
+    roleId?: number;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -55,6 +71,10 @@ const AppNavigatorContent: React.FC = () => {
         <Stack.Screen name="RegisterSchool" component={RegisterSchoolScreen} />
         <Stack.Screen name="QuickAccess" component={QuickAccessScreen} />
         <Stack.Screen name="SchoolSettings" component={SchoolSettingsScreen} />
+        <Stack.Screen name="OrganizationConfig" component={OrganizationConfigScreen} />
+        <Stack.Screen name="CreateNewRole" component={CreateNewRoleScreen} />
+        <Stack.Screen name="RoleConfig" component={RoleConfigScreen} />
+        <Stack.Screen name="ModulePermissions" component={ModulePermissionsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
