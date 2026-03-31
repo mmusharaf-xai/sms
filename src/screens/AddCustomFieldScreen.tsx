@@ -252,6 +252,27 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
       const validOptions = selectOptions.filter((o) => o.label.trim());
       if (validOptions.length < 1) {
         newErrors.options = 'At least one option is required';
+      } else {
+        // Empty labels or values
+        if (selectOptions.some((o) => !o.label.trim())) {
+          newErrors.options = 'All options must have a label';
+        } else if (selectOptions.some((o) => !o.value.trim())) {
+          newErrors.options = 'All options must have a value';
+        }
+        // Duplicate labels (case-insensitive)
+        if (!newErrors.options) {
+          const labels = selectOptions.map((o) => o.label.trim().toLowerCase());
+          if (new Set(labels).size !== labels.length) {
+            newErrors.options = 'Option labels must be unique';
+          }
+        }
+        // Duplicate values (case-insensitive)
+        if (!newErrors.options) {
+          const values = selectOptions.map((o) => o.value.trim().toLowerCase());
+          if (new Set(values).size !== values.length) {
+            newErrors.options = 'Option values must be unique';
+          }
+        }
       }
     }
 
@@ -298,27 +319,55 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
 
   // ── Select option handlers ─────────────────────────────────────────
 
+  const clearOptionErrors = () => {
+    if (errors.options) setErrors((p) => ({ ...p, options: '' }));
+  };
+
   const handleAddOption = () => {
     const nextIndex = selectOptions.length + 1;
     setSelectOptions((prev) => [
       ...prev,
       { label: `Option ${nextIndex}`, value: `opt_${nextIndex}` },
     ]);
+    clearOptionErrors();
   };
 
   const handleRemoveOption = (index: number) => {
     setSelectOptions((prev) => prev.filter((_, i) => i !== index));
+    clearOptionErrors();
   };
 
   const handleOptionLabelChange = (index: number, label: string) => {
     setSelectOptions((prev) =>
       prev.map((opt, i) => (i === index ? { ...opt, label } : opt))
     );
+    clearOptionErrors();
   };
 
   const handleOptionValueChange = (index: number, value: string) => {
     setSelectOptions((prev) =>
       prev.map((opt, i) => (i === index ? { ...opt, value } : opt))
+    );
+    clearOptionErrors();
+  };
+
+  // ── Option error helpers (only active after save attempt) ─────────
+
+  const isOptionLabelInvalid = (index: number): boolean => {
+    if (!errors.options) return false;
+    const opt = selectOptions[index];
+    if (!opt.label.trim()) return true;
+    return selectOptions.some(
+      (o, i) => i !== index && o.label.trim().toLowerCase() === opt.label.trim().toLowerCase()
+    );
+  };
+
+  const isOptionValueInvalid = (index: number): boolean => {
+    if (!errors.options) return false;
+    const opt = selectOptions[index];
+    if (!opt.value.trim()) return true;
+    return selectOptions.some(
+      (o, i) => i !== index && o.value.trim().toLowerCase() === opt.value.trim().toLowerCase()
     );
   };
 
@@ -489,7 +538,11 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
                 value={numberRegex}
                 onChangeText={(v) => {
                   setNumberRegex(v);
-                  if (errors.numberRegex) setErrors((p) => ({ ...p, numberRegex: '' }));
+                  if (v && !isValidRegex(v)) {
+                    setErrors((p) => ({ ...p, numberRegex: 'Invalid regex pattern' }));
+                  } else if (errors.numberRegex) {
+                    setErrors((p) => ({ ...p, numberRegex: '' }));
+                  }
                 }}
                 placeholder="^[0-9]*$"
                 autoCapitalize="none"
@@ -562,14 +615,20 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
                 <View key={index} style={styles.optionRow}>
                   <Ionicons name="reorder-three" size={22} color={colors.textMuted} />
                   <TextInput
-                    style={styles.optionInput}
+                    style={[
+                      styles.optionInput,
+                      isOptionLabelInvalid(index) && styles.optionInputError,
+                    ]}
                     value={option.label}
                     onChangeText={(v) => handleOptionLabelChange(index, v)}
                     placeholder="Label"
                     placeholderTextColor={colors.textMuted}
                   />
                   <TextInput
-                    style={styles.optionInput}
+                    style={[
+                      styles.optionInput,
+                      isOptionValueInvalid(index) && styles.optionInputError,
+                    ]}
                     value={option.value}
                     onChangeText={(v) => handleOptionValueChange(index, v)}
                     placeholder="Value"
@@ -619,7 +678,11 @@ const AddCustomFieldScreen: React.FC<Props> = ({ route, navigation }) => {
                 value={textRegex}
                 onChangeText={(v) => {
                   setTextRegex(v);
-                  if (errors.textRegex) setErrors((p) => ({ ...p, textRegex: '' }));
+                  if (v && !isValidRegex(v)) {
+                    setErrors((p) => ({ ...p, textRegex: 'Invalid regex pattern' }));
+                  } else if (errors.textRegex) {
+                    setErrors((p) => ({ ...p, textRegex: '' }));
+                  }
                 }}
                 placeholder="^[a-zA-Z ]*$"
                 autoCapitalize="none"
@@ -855,6 +918,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     fontSize: 14,
     color: colors.textPrimary,
+  },
+  optionInputError: {
+    borderColor: colors.error,
   },
   errorText: {
     fontSize: 12,
