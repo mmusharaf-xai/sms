@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
 
-  // Groups wrapper
+  // Groups wrapper — no horizontal padding; items handle their own
   groupsWrapper: {
     marginHorizontal: 20,
     backgroundColor: colors.white,
@@ -438,7 +438,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     paddingVertical: 8,
-    paddingHorizontal: 16,
   },
 
   // Section
@@ -450,15 +449,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textSecondary,
     letterSpacing: 1,
-    marginBottom: 12,
+    marginBottom: 4,
     marginTop: 4,
+    paddingHorizontal: 16,
   },
 
-  // Group Card
+  // Group Card — each row owns its horizontal padding
   groupCard: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
+    paddingHorizontal: 16,
     borderBottomWidth: 0.5,
     borderBottomColor: colors.border,
   },
