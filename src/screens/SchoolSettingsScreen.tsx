@@ -266,11 +266,33 @@ const SchoolSettingsScreen: React.FC<SchoolSettingsScreenProps> = ({ route, navi
     });
   };
 
+  // Map settings route identifiers to module keys for field-config screens
+  const SETTINGS_MODULE_MAP: Record<string, { key: string; name: string }> = {
+    StaffsSettings: { key: 'staffs', name: 'Staffs' },
+    StudentsSettings: { key: 'students', name: 'Students' },
+    InvoicesSettings: { key: 'invoices', name: 'Invoices' },
+    AssetsSettings: { key: 'assets', name: 'Assets' },
+    ClassesSettings: { key: 'classes', name: 'Classes' },
+  };
+
   const handleItemPress = (item: SettingsSection) => {
     if (item.route === 'OrganizationSettings') {
       navigation.navigate('OrganizationConfig', { schoolId, schoolName });
       return;
     }
+
+    // Route module settings to the common field-config screen
+    const moduleInfo = SETTINGS_MODULE_MAP[item.route];
+    if (moduleInfo) {
+      navigation.navigate('ModuleFieldConfig', {
+        schoolId,
+        schoolName,
+        moduleKey: moduleInfo.key,
+        moduleName: moduleInfo.name,
+      });
+      return;
+    }
+
     console.log('Navigate to settings:', item.route);
   };
 

@@ -27,6 +27,10 @@ export const initDb = async () => {
 
     await database.run('CREATE TABLE IF NOT EXISTS modules (id INTEGER PRIMARY KEY AUTOINCREMENT, school_id INTEGER NOT NULL, key TEXT NOT NULL, name TEXT NOT NULL, icon TEXT NOT NULL, fields TEXT NOT NULL DEFAULT "[]", display_order INTEGER NOT NULL DEFAULT 0, is_active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)');
 
+    await database.run('CREATE TABLE IF NOT EXISTS field_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, school_id INTEGER NOT NULL, module_key TEXT NOT NULL, name TEXT NOT NULL, icon TEXT NOT NULL DEFAULT "folder-open", is_default INTEGER NOT NULL DEFAULT 0, display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)');
+
+    await database.run('CREATE TABLE IF NOT EXISTS field_configs (id INTEGER PRIMARY KEY AUTOINCREMENT, school_id INTEGER NOT NULL, module_key TEXT NOT NULL, group_id INTEGER NOT NULL, name TEXT NOT NULL, field_type TEXT NOT NULL DEFAULT "Text", description TEXT, config TEXT NOT NULL DEFAULT "{}", is_required INTEGER NOT NULL DEFAULT 0, display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)');
+
     // Migration: Add new columns if they don't exist
     const migrations = [
       'ALTER TABLE users ADD COLUMN avatar TEXT',

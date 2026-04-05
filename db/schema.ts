@@ -73,3 +73,36 @@ export type NewRole = typeof roles.$inferInsert;
 
 export type Module = typeof modules.$inferSelect;
 export type NewModule = typeof modules.$inferInsert;
+
+export const fieldGroups = sqliteTable('field_groups', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  schoolId: integer('school_id').notNull(),
+  moduleKey: text('module_key').notNull(),
+  name: text('name').notNull(),
+  icon: text('icon').notNull().$defaultFn(() => 'folder-open'),
+  isDefault: integer('is_default', { mode: 'boolean' }).notNull().$defaultFn(() => false),
+  displayOrder: integer('display_order').notNull().$defaultFn(() => 0),
+  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const fieldConfigs = sqliteTable('field_configs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  schoolId: integer('school_id').notNull(),
+  moduleKey: text('module_key').notNull(),
+  groupId: integer('group_id').notNull(),
+  name: text('name').notNull(),
+  fieldType: text('field_type').notNull().$defaultFn(() => 'Text'),
+  description: text('description'),
+  config: text('config').notNull().$defaultFn(() => '{}'),
+  isRequired: integer('is_required', { mode: 'boolean' }).notNull().$defaultFn(() => false),
+  displayOrder: integer('display_order').notNull().$defaultFn(() => 0),
+  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export type FieldGroup = typeof fieldGroups.$inferSelect;
+export type NewFieldGroup = typeof fieldGroups.$inferInsert;
+
+export type FieldConfig = typeof fieldConfigs.$inferSelect;
+export type NewFieldConfig = typeof fieldConfigs.$inferInsert;

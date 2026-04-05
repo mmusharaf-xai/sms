@@ -9,3 +9,6 @@ export { default as OrganizationConfigScreen } from './OrganizationConfigScreen'
 export { default as CreateNewRoleScreen } from './CreateNewRoleScreen';
 export { default as RoleConfigScreen } from './RoleConfigScreen';
 export { default as ModulePermissionsScreen } from './ModulePermissionsScreen';
+export { default as ModuleFieldConfigScreen } from './ModuleFieldConfigScreen';
+export { default as GroupFieldListScreen } from './GroupFieldListScreen';
+export { default as AddCustomFieldScreen } from './AddCustomFieldScreen';
