@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen, QuickAccessScreen, SchoolSettingsScreen, OrganizationConfigScreen, CreateNewRoleScreen, RoleConfigScreen, ModulePermissionsScreen, ModuleFieldConfigScreen, GroupFieldListScreen, AddCustomFieldScreen } from '../screens';
+import { LoginScreen, SignupScreen, HomeScreen, AccountSettingsScreen, RegisterSchoolScreen, QuickAccessScreen, SchoolSettingsScreen, OrganizationConfigScreen, CreateNewRoleScreen, RoleConfigScreen, ModulePermissionsScreen, ModuleFieldConfigScreen, GroupFieldListScreen, AddCustomFieldScreen, StaffListingScreen, AddStaffScreen } from '../screens';
 import { initDb } from '../../db/connection';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 
@@ -53,6 +53,14 @@ export type RootStackParamList = {
     groupName: string;
     fieldId?: number;
   };
+  Staffs: {
+    schoolId: number;
+    schoolName: string;
+  };
+  AddStaff: {
+    schoolId: number;
+    schoolName: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -102,6 +110,8 @@ const AppNavigatorContent: React.FC = () => {
         <Stack.Screen name="ModuleFieldConfig" component={ModuleFieldConfigScreen} />
         <Stack.Screen name="GroupFieldList" component={GroupFieldListScreen} />
         <Stack.Screen name="AddCustomField" component={AddCustomFieldScreen} />
+        <Stack.Screen name="Staffs" component={StaffListingScreen} />
+        <Stack.Screen name="AddStaff" component={AddStaffScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

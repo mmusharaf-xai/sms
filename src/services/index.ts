@@ -8,3 +8,4 @@ export * from './organizationConfigService';
 export * from './roleService';
 export * from './moduleService';
 export * from './fieldGroupService';
+export * from './staffService';

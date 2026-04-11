@@ -7,11 +7,11 @@ import {
   Animated,
   PanResponder,
   Dimensions,
-  SafeAreaView,
   ScrollView,
   Modal,
   Pressable,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../utils/colors';
 import {
