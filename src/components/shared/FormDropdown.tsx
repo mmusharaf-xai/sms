@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../utils/colors';
 
@@ -23,6 +23,7 @@ interface FormDropdownProps {
   onChange: (value: string) => void;
   placeholder?: string;
   containerStyle?: any;
+  error?: string;
 }
 
 const FormDropdown: React.FC<FormDropdownProps> = ({
@@ -32,6 +33,7 @@ const FormDropdown: React.FC<FormDropdownProps> = ({
   onChange,
   placeholder = 'Select...',
   containerStyle,
+  error,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const selectedOption = options.find((opt) => opt.value === value);
@@ -45,7 +47,7 @@ const FormDropdown: React.FC<FormDropdownProps> = ({
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TouchableOpacity
-        style={styles.dropdown}
+        style={[styles.dropdown, error && styles.dropdownError]}
         onPress={() => setModalVisible(true)}
         activeOpacity={0.7}
       >
@@ -59,6 +61,7 @@ const FormDropdown: React.FC<FormDropdownProps> = ({
         </Text>
         <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
       </TouchableOpacity>
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
       <Modal
         visible={modalVisible}
@@ -192,6 +195,16 @@ const styles = StyleSheet.create({
   optionTextSelected: {
     color: colors.schoolAccent,
     fontWeight: '600',
+  },
+  dropdownError: {
+    borderColor: colors.error,
+    borderWidth: 1,
+  },
+  errorText: {
+    color: colors.error,
+    fontSize: 13,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });
 

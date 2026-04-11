@@ -12,3 +12,5 @@ export { default as ModulePermissionsScreen } from './ModulePermissionsScreen';
 export { default as ModuleFieldConfigScreen } from './ModuleFieldConfigScreen';
 export { default as GroupFieldListScreen } from './GroupFieldListScreen';
 export { default as AddCustomFieldScreen } from './AddCustomFieldScreen';
+export { default as StaffListingScreen } from './StaffListingScreen';
+export { default as AddStaffScreen } from './AddStaffScreen';

@@ -326,6 +326,10 @@ const QuickAccessScreen: React.FC<QuickAccessScreenProps> = ({ route, navigation
       navigation.navigate('SchoolSettings', params);
       return;
     }
+    if (route === 'Staffs') {
+      navigation.navigate('Staffs', params);
+      return;
+    }
     // For now, just log - these routes will be implemented later
     console.log('Navigate to:', route, params);
   };
